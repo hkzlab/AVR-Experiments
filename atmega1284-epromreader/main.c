@@ -15,7 +15,7 @@
  */
  
 #ifndef F_CPU
-#define F_CPU 8000000UL
+#define F_CPU 8000000UL // MCU Frequency set to 8Mhz
 #endif
 
 #include <stdint.h>
