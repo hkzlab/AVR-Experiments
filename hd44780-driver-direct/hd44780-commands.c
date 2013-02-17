@@ -31,6 +31,7 @@ uint16_t hd44780_SetCGRAMAddr(uint8_t address) {
 uint16_t hd44780_SetDDRAMAddr(uint8_t address) {
 	return 0x80 | (address & 0x7F);
 }
+
 uint16_t hd44780_ReadBF_Addr(uint8_t bf, uint8_t address) {
 	return 0x100 | ((bf & 0x01) << 7) | (address & 0x7F);
 }

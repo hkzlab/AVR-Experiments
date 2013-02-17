@@ -41,28 +41,38 @@ int main(void) {
 
 	lcd_command = hd44780_FunctionSet(0, 1, 0);
 	hd44780_sendCommand(&conn, lcd_command);
-	fprintf(stdout, "Sent %.4X\n", lcd_command);
 	_delay_ms(5);
 
 	lcd_command = hd44780_DisplayControl(0, 0, 0);
 	hd44780_sendCommand(&conn, lcd_command);
-	fprintf(stdout, "Sent %.4X\n", lcd_command);	
 	_delay_ms(5);	
 
 	lcd_command = hd44780_ClearDisplay();
 	hd44780_sendCommand(&conn, lcd_command);
-	fprintf(stdout, "Sent %.4X\n", lcd_command);	
 	_delay_ms(5);
 
 	lcd_command = hd44780_EntryModeSet(1, 0);
 	hd44780_sendCommand(&conn, lcd_command);
-	fprintf(stdout, "Sent %.4X\n", lcd_command);	
 	_delay_ms(5);
 
-	lcd_command = hd44780_DisplayControl(1, 1, 1);
+	lcd_command = hd44780_DisplayControl(1, 0, 0);
 	hd44780_sendCommand(&conn, lcd_command);
-	fprintf(stdout, "Sent %.4X\n", lcd_command);	
 	_delay_ms(5);	
+
+
+	char *string = "Ciao Giada!";
+	for (int idx = 0; string[idx] != '\0'; idx++) {
+		if (!(idx % 8)) {
+			lcd_command = hd44780_SetDDRAMAddr(0x40 * (idx/8));
+			hd44780_sendCommand(&conn, lcd_command);
+			_delay_ms(1);	
+		}
+
+		lcd_command = hd44780_WriteData(string[idx]);
+		hd44780_sendCommand(&conn, lcd_command);
+		_delay_ms(1);	
+
+	}
 
 	fprintf(stdout, "DONE!!!\n");
 
