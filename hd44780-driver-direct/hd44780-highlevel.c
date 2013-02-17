@@ -48,7 +48,7 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t position, char *text) 
 			break;
 	}
 
-	// Move the cursor to position
+	// Move to position
 	driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(char_address));
 
 	for (int idx = 0; text[idx] != '\0'; idx++) {
@@ -68,5 +68,30 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t position, char *text) 
 				break;
 		}
 	}
+}
 
+void hd44780_hl_shiftDisplay(hd44780_driver *driver, uint8_t direction) {
+	if (!driver) return;
+
+	driver->sendCommand(driver->conn_struct, hd44780_SetShift(1, direction ? 1 : 0));
+}
+
+void hd44780_hl_shiftCursor(hd44780_driver *driver, uint8_t direction) {
+	if (!driver) return;
+
+	driver->sendCommand(driver->conn_struct, hd44780_SetShift(0, direction ? 1 : 0));
+}
+
+void hd44789_hl_setCustomFont(hd44780_driver *driver, uint8_t slot, uint8_t *data) {
+	if (!driver) return;
+	
+	if (slot > 7) return; // hd44780 specifies 8 slots only for custom characters
+
+	driver->sendCommand(driver->conn_struct, hd44780_SetCGRAMAddr(slot * 8));
+
+	for (uint8_t idx = 0; idx < 8; idx++) {
+		driver->sendCommand(driver->conn_struct, hd44780_WriteData(data[idx]));
+	}
+
+	driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(0));
 }

@@ -15,7 +15,7 @@
 #include "main.h"
 #include "uart.h"
 
-int main(void) {    
+int main(void) {
 	hd44780_driver connDriver;
 
 	connDriver.conn_struct = (void*)malloc(sizeof(hd44780_connection));
@@ -43,13 +43,24 @@ int main(void) {
 
 	hd44780_hl_init(&connDriver, 0, 0);
 
-	hd44780_hl_printText(&connDriver, 4, "Ciao Fabio!");
-	
+	uint8_t data[] = {0x1B, 
+					  0x1B,
+					  0x00,
+					  0x04,
+					  0x04,
+					  0x04,
+					  0x11,
+					  0x0E};
+		
+
+	hd44789_hl_setCustomFont(&connDriver, 1, data);
+	hd44780_hl_printText(&connDriver, 0, "Ciao! \01");	
+
 	fprintf(stdout, "DONE!!!\n");
 
+
 	while (1) {
-		//fprintf(stdout, "Loop!\n");
-		_delay_ms(5);
+		_delay_ms(1000);
 	}
    
     return 0;
