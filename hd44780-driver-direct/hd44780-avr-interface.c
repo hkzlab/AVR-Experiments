@@ -8,10 +8,12 @@
 uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 	uint8_t enPortStatus, rsPortStatus, dataPortStatus;
 
+	// Pull EN high...	
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; // Lower the EN line!
 	
+	// Put EN low again...
 	rsPortStatus = *(connection->enPort);
 	DISABLE_PIN(rsPortStatus, connection->rsPin);
 	*(connection->rsPort) = rsPortStatus; // Disable the RS port!
@@ -25,13 +27,13 @@ uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 		// Pull EN high...
 		enPortStatus = *(connection->enPort);
 		ENABLE_PIN(enPortStatus, connection->enPin);
-		*(connection->enPort) = enPortStatus; // Put hight the EN line!
+		*(connection->enPort) = enPortStatus;
 		_delay_ms(10);
 
 		// Put EN low again...
 		enPortStatus = *(connection->enPort);
 		DISABLE_PIN(enPortStatus, connection->enPin);
-		*(connection->enPort) = enPortStatus; // Lower the EN line!
+		*(connection->enPort) = enPortStatus; 
 		_delay_ms(10);
 	}
 
@@ -43,13 +45,13 @@ uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 	// Pull EN high...
 	enPortStatus = *(connection->enPort);
 	ENABLE_PIN(enPortStatus, connection->enPin);
-	*(connection->enPort) = enPortStatus; // Lower the EN line!
+	*(connection->enPort) = enPortStatus; 
 	_delay_ms(10);
 
 	// Put EN low again...
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
-	*(connection->enPort) = enPortStatus; // Lower the EN line!
+	*(connection->enPort) = enPortStatus;
 	_delay_ms(10);
 
 	return 4;
@@ -57,15 +59,14 @@ uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 
 void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
 	uint8_t enPortStatus, rsPortStatus, dataPortStatus;
-//	uint8_t rwPortStatus = *(connection->rwPort);
+//	uint8_t rwPortStatus = *(connection->rwPort); // Ignore RW line & commands for now
 
 	uint8_t commandByte = command & 0xFF;
 
+	// Put EN low again...	
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; // Lower the EN line!
-
-	// Ignore R/W for now...	
 
 	rsPortStatus = *(connection->rsPort);
 	if (command & 0x200) // Set the RS pin
@@ -74,7 +75,7 @@ void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
 		DISABLE_PIN(rsPortStatus, connection->rsPin);
 	*(connection->rsPort) = rsPortStatus; // set the RS port!
 
-	// Put the HIGH byte of command on data lines
+	// Put the HIGH nibble of command on data lines
 	dataPortStatus = *(connection->dataPort);
 	dataPortStatus &= (0xF0 >> (connection->dataPinsBlock * 4));
 	dataPortStatus |= (((commandByte >> 4) & 0xF) << (connection->dataPinsBlock * 4));
@@ -89,10 +90,10 @@ void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
 	// Put EN low again...
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
-	*(connection->enPort) = enPortStatus; // Lower the EN line!
+	*(connection->enPort) = enPortStatus;
 	_delay_ms(10);	
 
-	// Put the LOW byte of command on data lines
+	// Put the LOW nibble of command on data lines
 	dataPortStatus = *(connection->dataPort);
 	dataPortStatus &= (0xF0 >> (connection->dataPinsBlock * 4));
 	dataPortStatus |= ((commandByte & 0xF) << (connection->dataPinsBlock * 4));
@@ -101,13 +102,13 @@ void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
 	// Pull EN high...
 	enPortStatus = *(connection->enPort);
 	ENABLE_PIN(enPortStatus, connection->enPin);
-	*(connection->enPort) = enPortStatus; // Enable the EN line!
+	*(connection->enPort) = enPortStatus;
 	_delay_ms(10);
 
 	// Put EN low again...
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
-	*(connection->enPort) = enPortStatus; // Lower the EN line!
+	*(connection->enPort) = enPortStatus; 
 	_delay_ms(10);	
 
 	return;
