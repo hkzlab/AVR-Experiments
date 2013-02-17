@@ -28,13 +28,13 @@ uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 		enPortStatus = *(connection->enPort);
 		ENABLE_PIN(enPortStatus, connection->enPin);
 		*(connection->enPort) = enPortStatus;
-		_delay_ms(10);
+		_delay_ms(6);
 
 		// Put EN low again...
 		enPortStatus = *(connection->enPort);
 		DISABLE_PIN(enPortStatus, connection->enPin);
 		*(connection->enPort) = enPortStatus; 
-		_delay_ms(10);
+		_delay_ms(6);
 	}
 
 	dataPortStatus = *(connection->dataPort);
@@ -46,13 +46,13 @@ uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 	enPortStatus = *(connection->enPort);
 	ENABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; 
-	_delay_ms(10);
+	_delay_ms(6);
 
 	// Put EN low again...
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus;
-	_delay_ms(10);
+	_delay_ms(6);
 
 	return 4;
 }
@@ -85,13 +85,13 @@ void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
 	enPortStatus = *(connection->enPort);
 	ENABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; // Enable the EN line!
-	_delay_ms(10);
+	_delay_ms(1);
 
 	// Put EN low again...
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus;
-	_delay_ms(10);	
+	_delay_ms(1);	
 
 	// Put the LOW nibble of command on data lines
 	dataPortStatus = *(connection->dataPort);
@@ -103,13 +103,13 @@ void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
 	enPortStatus = *(connection->enPort);
 	ENABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus;
-	_delay_ms(10);
+	_delay_ms(1);
 
 	// Put EN low again...
 	enPortStatus = *(connection->enPort);
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; 
-	_delay_ms(10);	
+	_delay_ms(5);	
 
 	return;
 };
