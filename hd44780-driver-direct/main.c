@@ -6,15 +6,29 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <util/delay.h>
 
 #include "hd44780-avr-interface.h"
 #include "hd44780-commands.h"
+#include "hd44780-highlevel.h"
 
 #include "main.h"
 #include "uart.h"
 
 int main(void) {    
+	hd44780_driver connDriver;
+
+	connDriver.conn_struct = (void*)malloc(sizeof(hd44780_connection));
+	((hd44780_connection*)(connDriver.conn_struct))->dataPort = &PORTB;
+/*
+	(connDriver.(hd44780_connection*)conn_struct)->dataPinsBlock = 1;
+	(connDriver.(hd44780_connection*)conn_struct)->rsPort = &PORTB;
+	(connDriver.(hd44780_connection*)conn_struct)->rsPin = 0;
+	(connDriver.(hd44780_connection*)conn_struct)->enPort = &PORTB;
+	(connDriver.(hd44780_connection*)conn_struct)->enPin = 1;
+*/
+
 	hd44780_connection conn;
 	uint16_t lcd_command;
 
@@ -29,6 +43,8 @@ int main(void) {
 
 	conn.enPort = &PORTB;
 	conn.enPin = 1;
+
+
 
 	// Initialize serial port for output
     uart_init();

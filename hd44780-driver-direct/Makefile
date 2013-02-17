@@ -51,7 +51,7 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c uart.c hd44780-commands.c hd44780-avr-interface.c
+SRC = $(TARGET).c uart.c hd44780-commands.c hd44780-avr-interface.c hd44780-highlevel.c
 
 # List Assembler source files here.
 #     Make them always end in a capital .S.  Files ending in a lowercase .s

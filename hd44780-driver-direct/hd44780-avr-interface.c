@@ -12,7 +12,7 @@ void hd44780_initLCD4Bit(hd44780_connection *connection) {
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; // Lower the EN line!
 	
-	enPortStatus = *(connection->enPort);
+	rsPortStatus = *(connection->enPort);
 	DISABLE_PIN(rsPortStatus, connection->rsPin);
 	*(connection->rsPort) = rsPortStatus; // Disable the RS port!
 

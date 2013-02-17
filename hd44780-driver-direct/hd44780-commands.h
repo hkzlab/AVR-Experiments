@@ -15,6 +15,7 @@ uint16_t hd44780_SetShift(uint8_t sel, uint8_t dir);
 // Selects data length for display interface, number of display lines and char fonts
 uint16_t hd44780_FunctionSet(uint8_t dataLen, uint8_t dLines, uint8_t cFont);
 // Sets CGRAM address, CGRAM data are sent and received after this setting
+// See here for custom font creation: http://www.circuitvalley.com/2012/02/lcd-custom-character-hd44780-16x2.html
 uint16_t hd44780_SetCGRAMAddr(uint8_t address);
 // Sets DDRAM address, CGRAM data are sent and received after this setting
 uint16_t hd44780_SetDDRAMAddr(uint8_t address);
