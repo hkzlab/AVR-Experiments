@@ -14,6 +14,6 @@ typedef struct {
 	uint8_t rwPin;
 } hd44780_connection;
 
-void hd44780_initLCD4Bit(hd44780_connection *connection);
+uint8_t hd44780_initLCD4Bit(hd44780_connection *connection); // returns 4 for 4bit interface!
 void hd44780_sendCommand(hd44780_connection *connection, uint16_t command);
 

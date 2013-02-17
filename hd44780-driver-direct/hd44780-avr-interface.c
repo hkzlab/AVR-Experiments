@@ -5,7 +5,7 @@
 #define ENABLE_PIN(port, num) (port |= (1 << num))
 #define DISABLE_PIN(port, num) (port &= (~(1 << num)))
 
-void hd44780_initLCD4Bit(hd44780_connection *connection) {
+uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 	uint8_t enPortStatus, rsPortStatus, dataPortStatus;
 
 	enPortStatus = *(connection->enPort);
@@ -51,6 +51,8 @@ void hd44780_initLCD4Bit(hd44780_connection *connection) {
 	DISABLE_PIN(enPortStatus, connection->enPin);
 	*(connection->enPort) = enPortStatus; // Lower the EN line!
 	_delay_ms(10);
+
+	return 4;
 }
 
 void hd44780_sendCommand(hd44780_connection *connection, uint16_t command) {
