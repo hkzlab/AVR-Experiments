@@ -56,11 +56,14 @@ int main(void) {
 	hd44789_hl_setCustomFont(&connDriver, 1, data);
 	hd44780_hl_printText(&connDriver, 0, "Ciao! \01");	
 
-	fprintf(stdout, "DONE!!!\n");
+	_delay_ms(2000);	
 
+	data[6] = 0x00;
+	data[7] = 0x1F;
+
+	hd44789_hl_setCustomFont(&connDriver, 1, data);	
 
 	while (1) {
-		_delay_ms(1000);
 	}
    
     return 0;
