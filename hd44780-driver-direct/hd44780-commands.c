@@ -39,7 +39,7 @@ uint16_t hd44780_WriteData(uint8_t data) {
 	return 0x200 | data;
 }
 
-uint16_t hd44780_WriteData(uint8_t data) {
+uint16_t hd44780_ReadData(uint8_t data) {
 	return 0x300 | data;
 }
 

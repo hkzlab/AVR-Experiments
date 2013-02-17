@@ -23,5 +23,5 @@ uint16_t hd44780_ReadBF_Addr(uint8_t bf, uint8_t address);
 // Writes data to CGRAM/DDRAM address, depending on previous set op
 uint16_t hd44780_WriteData(uint8_t data);
 // Read data from CGRAM/DDRAM
-uint16_t hd44780_WriteData(uint8_t data); // data?
+uint16_t hd44780_ReadData(uint8_t data); // data?
 

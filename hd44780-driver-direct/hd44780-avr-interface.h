@@ -1,18 +1,19 @@
-#include <stdlib.h>
+#include <stdint.h>
 
 typedef struct {
-	uint8_t *dataPort;
-	uint8_t dataPins[4];
+	volatile uint8_t *dataPort;
+	uint8_t dataPinsBlock; // 
 
-	uint8_t *rsPort;
+	volatile uint8_t *rsPort;
 	uint8_t rsPin;
 
-	uint8_t *enPort;
+	volatile uint8_t *enPort;
 	uint8_t enPin;
 
-	uint8_t *rwPort;
+	volatile uint8_t *rwPort;
 	uint8_t rwPin;
 } hd44780_connection;
 
+void hd44780_initLCD4Bit(hd44780_connection *connection);
 void hd44780_sendCommand(hd44780_connection *connection, uint16_t command);
 
