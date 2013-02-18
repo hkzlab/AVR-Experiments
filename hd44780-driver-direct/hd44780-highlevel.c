@@ -36,12 +36,13 @@ void hd44780_hl_init(hd44780_driver *driver, uint8_t show_cursor, uint8_t blink_
 	driver->sendCommand(driver->conn_struct, hd44780_DisplayControl(1, show_cursor ? 1 : 0, blink_cursor ? 1 : 0));
 } 
 
-void hd44780_hl_printText(hd44780_driver *driver, uint8_t position, char *text) {
+void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position, char *text) {
 	if (!driver) return;
 	uint8_t char_address = 0;
 
 	switch (driver->type) {
 		case hd44780_16x1:
+			position = (0x40 * line) + position;
 			char_address = (position % 8) + (0x40 * (position / 8));
 			break;
 		default:
@@ -70,6 +71,26 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t position, char *text) 
 	}
 }
 
+void hd44780_hl_printChar(hd44780_driver *driver, uint8_t line, uint8_t position, char c) {
+	if (!driver) return;
+	uint8_t char_address = 0;
+
+	switch (driver->type) {
+		case hd44780_16x1:
+			position = (0x40 * line) + position;
+			char_address = (position % 8) + (0x40 * (position / 8));
+			break;
+		default:
+			break;
+	}
+
+	// Move to position
+	driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(char_address));
+
+	// Print char
+	driver->sendCommand(driver->conn_struct, hd44780_WriteData(c));
+}
+
 void hd44780_hl_shiftDisplay(hd44780_driver *driver, uint8_t direction) {
 	if (!driver) return;
 
@@ -82,7 +103,7 @@ void hd44780_hl_shiftCursor(hd44780_driver *driver, uint8_t direction) {
 	driver->sendCommand(driver->conn_struct, hd44780_SetShift(0, direction ? 1 : 0));
 }
 
-void hd44789_hl_setCustomFont(hd44780_driver *driver, uint8_t slot, uint8_t *data) {
+void hd44780_hl_setCustomFont(hd44780_driver *driver, uint8_t slot, uint8_t *data) {
 	if (!driver) return;
 	
 	if (slot > 7) return; // hd44780 specifies 8 slots only for custom characters

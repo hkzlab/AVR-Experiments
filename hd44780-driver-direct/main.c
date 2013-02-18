@@ -53,15 +53,19 @@ int main(void) {
 					  0x0E};
 		
 
-	hd44789_hl_setCustomFont(&connDriver, 1, data);
-	hd44780_hl_printText(&connDriver, 0, "Ciao! \01");	
+	hd44780_hl_setCustomFont(&connDriver, 1, data);
+	hd44780_hl_printText(&connDriver, 0, 0, "Ciao! \01");	
 
 	_delay_ms(2000);	
 
 	data[6] = 0x00;
 	data[7] = 0x1F;
 
-	hd44789_hl_setCustomFont(&connDriver, 1, data);	
+	hd44780_hl_setCustomFont(&connDriver, 1, data);	
+
+	_delay_ms(2000);
+
+	hd44780_hl_printChar(&connDriver, 0, 10, '\01');
 
 	while (1) {
 	}
