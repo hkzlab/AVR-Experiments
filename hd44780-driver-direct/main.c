@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <util/delay.h>
 
 #include "hd44780-avr-interface.h"
@@ -16,20 +15,8 @@
 #include "uart.h"
 
 int main(void) {
-	hd44780_driver connDriver;
-
-	connDriver.conn_struct = (void*)malloc(sizeof(hd44780_connection));
-	((hd44780_connection*)(connDriver.conn_struct))->dataPort = &PORTB;
-	((hd44780_connection*)(connDriver.conn_struct))->dataPinsBlock = 1;
-	((hd44780_connection*)(connDriver.conn_struct))->rsPort = &PORTB;
-	((hd44780_connection*)(connDriver.conn_struct))->rsPin = 0;
-	((hd44780_connection*)(connDriver.conn_struct))->enPort = &PORTB;
-	((hd44780_connection*)(connDriver.conn_struct))->enPin = 1;
-
-	connDriver.initialize = (uint8_t (*)(void*))hd44780_initLCD4Bit;
-	connDriver.sendCommand = (void (*)(void*, uint16_t))hd44780_sendCommand;
-
-	connDriver.type = hd44780_16x1;
+	hd44780_connection *conn_struct = hd44780_createConnection(&PORTB, 1, &PORTB, 0, &PORTB, 1, &PORTB, 2);
+	hd44780_driver *connDriver = hd44780_hl_createDriver(hd44780_16x1, conn_struct, (uint8_t (*)(void*))hd44780_initLCD4Bit, (void (*)(void*, uint16_t))hd44780_sendCommand);
 
 	DDRB = 0xFF; // Set port B as output!
 	PORTB = 0x00; // And zero it
@@ -41,7 +28,7 @@ int main(void) {
 
 	_delay_ms(3000);
 
-	hd44780_hl_init(&connDriver, 0, 0);
+	hd44780_hl_init(connDriver, 0, 0);
 
 	uint8_t data[] = {0x1B, 
 					  0x1B,
@@ -53,19 +40,23 @@ int main(void) {
 					  0x0E};
 		
 
-	hd44780_hl_setCustomFont(&connDriver, 1, data);
-	hd44780_hl_printText(&connDriver, 0, 0, "Ciao! \01");	
+	hd44780_hl_setCustomFont(connDriver, 1, data);
+	hd44780_hl_printText(connDriver, 0, 0, "Ciao! \01");	
 
 	_delay_ms(2000);	
 
 	data[6] = 0x00;
 	data[7] = 0x1F;
 
-	hd44780_hl_setCustomFont(&connDriver, 1, data);	
+	hd44780_hl_setCustomFont(connDriver, 1, data);	
 
 	_delay_ms(2000);
 
-	hd44780_hl_printChar(&connDriver, 0, 10, '\01');
+	hd44780_hl_printChar(connDriver, 0, 10, '\01');
+
+	_delay_ms(2000);
+
+	hd44780_hl_clear(connDriver);
 
 	while (1) {
 	}

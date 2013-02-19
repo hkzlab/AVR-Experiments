@@ -1,7 +1,20 @@
 #include "hd44780-highlevel.h"
 #include "hd44780-commands.h"
 
+#include <stdlib.h>
+
 #include <util/delay.h>
+
+hd44780_driver* hd44780_hl_createDriver(hd44780_type lcd_type, void *conn_struct, uint8_t (*initialize)(void*), void (*sendCommand)(void*, uint16_t)) {
+	hd44780_driver *driver = (hd44780_driver*)malloc(sizeof(hd44780_driver));
+
+	driver->type = lcd_type;
+	driver->initialize = initialize;
+	driver->sendCommand = sendCommand;
+	driver->conn_struct = conn_struct;
+
+	return driver;
+}
 
 void hd44780_hl_init(hd44780_driver *driver, uint8_t show_cursor, uint8_t blink_cursor) {
 	if (!driver) return;
@@ -115,4 +128,10 @@ void hd44780_hl_setCustomFont(hd44780_driver *driver, uint8_t slot, uint8_t *dat
 	}
 
 	driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(0));
+}
+
+void hd44780_hl_clear(hd44780_driver *driver) {
+	if (!driver) return;
+
+	driver->sendCommand(driver->conn_struct, hd44780_ClearDisplay());
 }

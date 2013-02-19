@@ -1,9 +1,29 @@
 #include "hd44780-avr-interface.h"
 
+#include <stdlib.h>
+
 #include <util/delay.h>
 
 #define ENABLE_PIN(port, num) (port |= (1 << num))
 #define DISABLE_PIN(port, num) (port &= (~(1 << num)))
+
+hd44780_connection *hd44780_createConnection(volatile uint8_t *dataPort, uint8_t dataBlock, volatile uint8_t *rsPort, uint8_t rsPin, volatile uint8_t *enPort, uint8_t enPin, volatile uint8_t *rwPort, uint8_t rwPin) {
+	hd44780_connection *conn = (hd44780_connection*)malloc(sizeof(hd44780_connection));
+
+	conn->dataPort = dataPort;
+	conn->dataPinsBlock = dataBlock;
+
+	conn->rsPort = rsPort;
+	conn->rsPin = rsPin;
+
+	conn->enPort = enPort;
+	conn->enPin = enPin;
+
+	conn->rwPort = rwPort;
+	conn->rwPin = rwPin;
+
+	return conn;
+}
 
 uint8_t hd44780_initLCD4Bit(hd44780_connection *connection) {
 	uint8_t enPortStatus, rsPortStatus, dataPortStatus;
