@@ -1,7 +1,8 @@
 #include <stdint.h>
 
 typedef enum {
-	hd44780_16x1 = 0
+	PVC160101Q_16x1 = 0,
+	TMBC20464BSP_20x4 = 1
 } hd44780_type;
 
 typedef struct {

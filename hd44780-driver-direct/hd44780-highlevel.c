@@ -5,6 +5,8 @@
 
 #include <util/delay.h>
 
+#include <stdio.h>
+
 hd44780_driver* hd44780_hl_createDriver(hd44780_type lcd_type, void *conn_struct, uint8_t (*initialize)(void*), void (*sendCommand)(void*, uint16_t)) {
 	hd44780_driver *driver = (hd44780_driver*)malloc(sizeof(hd44780_driver));
 
@@ -25,7 +27,8 @@ void hd44780_hl_init(hd44780_driver *driver, uint8_t show_cursor, uint8_t blink_
 	uint8_t fontsType;
 
 	switch (driver->type) {
-		case hd44780_16x1:
+		case PVC160101Q_16x1:
+		case TMBC20464BSP_20x4:
 			linesType = 1;
 			fontsType = 0;
 			break;
@@ -54,9 +57,30 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position
 	uint8_t char_address = 0;
 
 	switch (driver->type) {
-		case hd44780_16x1:
-			position = (0x40 * line) + position;
+		case PVC160101Q_16x1:
+			position = position % 16;
 			char_address = (position % 8) + (0x40 * (position / 8));
+			break;
+		case TMBC20464BSP_20x4:
+			switch (line) {
+				case 0:
+					char_address = 0;
+					break;
+				case 1:
+					char_address = 0x40;
+					break;
+				case 2:
+					char_address = 0x14;
+					break;
+				case 3:
+					char_address = 0x54;
+					break;
+				default:
+					break;
+			}
+
+			position %= 20;			
+			char_address += position;
 			break;
 		default:
 			break;
@@ -71,10 +95,36 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position
 
 		position++;
 		
+		// Check for the beginning of a new LCD line
 		switch (driver->type) {
-			case hd44780_16x1:
+			case PVC160101Q_16x1:
 				if (!(position % 8) && (position / 8)) {
-					char_address = (position % 8) + (0x40 * (position / 8));
+					char_address = (0x40 * (position / 8));
+					driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(char_address));
+				}
+				break;
+			case TMBC20464BSP_20x4:
+				if (position == 20) {
+					line++;
+					position = 0;
+
+					switch (line) {
+						case 0:
+							char_address = 0;
+							break;
+						case 1:
+							char_address = 0x40;
+							break;
+						case 2:
+							char_address = 0x14;
+							break;
+						case 3:
+							char_address = 0x54;
+							break;
+						default:
+							break;
+					}
+
 					driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(char_address));
 				}
 				break;
@@ -89,9 +139,30 @@ void hd44780_hl_printChar(hd44780_driver *driver, uint8_t line, uint8_t position
 	uint8_t char_address = 0;
 
 	switch (driver->type) {
-		case hd44780_16x1:
-			position = (0x40 * line) + position;
+		case PVC160101Q_16x1:
+			position = position % 16;
 			char_address = (position % 8) + (0x40 * (position / 8));
+			break;
+		case TMBC20464BSP_20x4:
+			switch (line) {
+				case 0:
+					char_address = 0;
+					break;
+				case 1:
+					char_address = 0x40;
+					break;
+				case 2:
+					char_address = 0x14;
+					break;
+				case 3:
+					char_address = 0x54;
+					break;
+				default:
+					break;
+			}
+
+			position %= 20;			
+			char_address += position;
 			break;
 		default:
 			break;
