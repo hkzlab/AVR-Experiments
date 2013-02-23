@@ -26,29 +26,46 @@ int main(void) {
     stdout = &uart_output;
     stdin  = &uart_input;
 
-	_delay_ms(3000);
-
 	hd44780_hl_init(connDriver, 0, 0);
 
-	uint8_t data[] = {0x1B, 
-					  0x1B,
-					  0x00,
-					  0x04,
-					  0x04,
-					  0x04,
-					  0x11,
-					  0x0E};
+	uint8_t data[6][8] = {{0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F},
+						  {0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E},
+						  {0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C},
+						  {0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18},
+						  {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10},
+						  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 		
 
-	hd44780_hl_setCustomFont(connDriver, 1, data);
-	hd44780_hl_printText(connDriver, 0, 0, "Sopra la panca la capra campa sotto la panca la capra crepa");	
-
-	_delay_ms(20000);
-
-	hd44780_hl_clear(connDriver);
+	hd44780_hl_setCustomFont(connDriver, 0, data[5]);
+	hd44780_hl_setCustomFont(connDriver, 1, data[4]);
+	hd44780_hl_setCustomFont(connDriver, 2, data[3]);
+	hd44780_hl_setCustomFont(connDriver, 3, data[2]);
+	hd44780_hl_setCustomFont(connDriver, 4, data[1]);
+	hd44780_hl_setCustomFont(connDriver, 5, data[0]);	
+	
 
 	while (1) {
+		int idx;
+		for (idx = 0; idx < 20 * 5; idx++) {
+			uint8_t  pos = idx / 5;
+			uint8_t sym = idx % 5;
+
+			hd44780_hl_printChar(connDriver, 0, pos, sym + 1);
+
+			_delay_ms(15);
+		}
+
+		for (idx = (20 * 5) - 1; idx >= 0; idx--) {
+			uint8_t  pos = idx / 5;
+			uint8_t sym = idx % 5;
+
+			hd44780_hl_printChar(connDriver, 0, pos, sym);		
+
+			_delay_ms(15);
+		}
 	}
-   
+
+//	hd44780_hl_clear(connDriver);
+
     return 0;
 }

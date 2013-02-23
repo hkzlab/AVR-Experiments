@@ -58,10 +58,14 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position
 
 	switch (driver->type) {
 		case PVC160101Q_16x1:
+			line %= 1;
+
 			position = position % 16;
 			char_address = (position % 8) + (0x40 * (position / 8));
 			break;
 		case TMBC20464BSP_20x4:
+			line %= 4;
+
 			switch (line) {
 				case 0:
 					char_address = 0;
@@ -90,8 +94,11 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position
 	driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(char_address));
 
 	for (int idx = 0; text[idx] != '\0'; idx++) {
-		driver->sendCommand(driver->conn_struct, hd44780_WriteData(text[idx]));
-		_delay_ms(1);
+
+		if (text[idx] != '\n') {
+			driver->sendCommand(driver->conn_struct, hd44780_WriteData(text[idx]));
+			_delay_ms(1);
+		}
 
 		position++;
 		
@@ -104,7 +111,7 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position
 				}
 				break;
 			case TMBC20464BSP_20x4:
-				if (position == 20) {
+				if (position == 20 || text[idx] == '\n') {
 					line++;
 					position = 0;
 
