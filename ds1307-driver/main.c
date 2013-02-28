@@ -11,6 +11,8 @@
 #include "main.h"
 #include "uart.h"
 
+#include "twilib.h"
+
 int main(void) {
 	// Initialize serial port for output
     uart_init();
