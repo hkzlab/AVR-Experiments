@@ -1,3 +1,6 @@
+#ifndef _HD44780_COMMANDS_
+#define _HD44780_COMMANDS_
+
 #include <stdint.h>
 
 // The descriptions are taken from here: http://en.wikipedia.org/wiki/Hitachi_HD44780_LCD_controller
@@ -26,3 +29,4 @@ uint16_t hd44780_WriteData(uint8_t data);
 // Read data from CGRAM/DDRAM
 uint16_t hd44780_ReadData(uint8_t data); // data?
 
+#endif /* _HD44780_COMMANDS_ */

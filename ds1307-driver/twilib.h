@@ -1,3 +1,6 @@
+#ifndef _TWILIB_HEADER_
+#define _TWILIB_HEADER_
+
 #include <stdint.h>
 
 // SCL freq = (CPU_FREQ) / (16 + 2 * TWBR * PRESCALER)
@@ -31,3 +34,5 @@ void I2C_masterBegin(I2C_Config* config);
 
 int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data);
 int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data);
+
+#endif /* _TWILIB_HEADER_ */

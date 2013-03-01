@@ -1,3 +1,6 @@
+#ifndef _HD44780_HIGHLEVEL_
+#define _HD44780_HIGHLEVEL_
+
 #include <stdint.h>
 
 typedef enum {
@@ -21,3 +24,4 @@ void hd44780_hl_shiftCursor(hd44780_driver *driver, uint8_t direction); // direc
 void hd44780_hl_setCustomFont(hd44780_driver *driver, uint8_t slot, uint8_t *data);
 void hd44780_hl_clear(hd44780_driver *driver);
 
+#endif /* _HD44780_HIGHLEVEL_ */
