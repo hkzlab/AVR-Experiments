@@ -6,10 +6,10 @@
 // SCL freq = (CPU_FREQ) / (16 + 2 * TWBR * PRESCALER)
 
 typedef enum {
-	I2C_Psc_1 = 1,
-	I2C_Psc_4 = 4,
-	I2C_Psc_16 = 16,
-	I2C_Psc_64 = 64
+	I2C_Psc_1 = 0,
+	I2C_Psc_4 = 1,
+	I2C_Psc_16 = 2,
+	I2C_Psc_64 = 3
 } I2C_Prescaler;
 
 typedef struct {
