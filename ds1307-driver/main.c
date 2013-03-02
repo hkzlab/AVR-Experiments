@@ -25,13 +25,13 @@ int main(void) {
 	dsDevice.address = 0;
 	I2C_masterBegin(masterConfig);
 
-	uint8_t regData = 0;
-	I2C_masterReadRegisterByte(&dsDevice, 0x01, &regData);
+	uint8_t regData[2];
+	I2C_masterReadRegisterByte(&dsDevice, 0x00, regData, 2);
 
 	while (1) {
-			_delay_ms(3000);
-			fprintf(stdout, "Loop! 0x%.2X\n", regData);
-			I2C_masterReadRegisterByte(&dsDevice, 0x01, &regData);
+		_delay_ms(3000);
+		fprintf(stdout, "Loop! 0x%.2X  0x%.2X\n", regData[0], regData[1]);
+		I2C_masterReadRegisterByte(&dsDevice, 0x00, regData, 2);
 	}
 
     return 0;

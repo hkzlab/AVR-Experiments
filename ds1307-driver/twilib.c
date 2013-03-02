@@ -3,12 +3,15 @@
 #include <util/twi.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+
 #define MAX_RETRIES 20
 
 typedef enum {
 	I2C_StartCommand = 0,
-	I2C_DataCommand = 1,
-	I2C_StopCommand = 2
+	I2C_DataNACKCommand = 1,
+	I2C_DataACKCommand = 2,
+	I2C_StopCommand = 3
 } I2C_CommandType;
 
 uint8_t I2C_internal_sendCommand(I2C_CommandType command);
@@ -39,8 +42,11 @@ uint8_t I2C_internal_sendCommand(I2C_CommandType command) {
 		case I2C_StartCommand:
 			TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 			break;
-		case I2C_DataCommand:
+		case I2C_DataNACKCommand:
 			TWCR = (1 << TWINT) | (1 << TWEN);
+			break;
+		case I2C_DataACKCommand:
+			TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
 			break;
 		case I2C_StopCommand:
 		default:
@@ -57,7 +63,7 @@ uint8_t I2C_internal_sendCommand(I2C_CommandType command) {
 int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
-	int retval = -1;
+	int retval = 1;
 
 	while (retryCount < MAX_RETRIES) {
 		// Start command
@@ -72,7 +78,7 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
 
 		// Now send slave address... asking for a write
 		TWDR = ((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E) | TW_WRITE;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if ((twiStatus == TW_MT_SLA_NACK) || (twiStatus == TW_MT_ARB_LOST)) {
 			retryCount++;
 			continue;
@@ -83,7 +89,7 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
 
 		// 8 bit register address
 		TWDR = reg;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if (twiStatus != TW_MT_DATA_ACK) {
 			retval = -1;
 			break;
@@ -91,14 +97,13 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
 
 		// Put data into register and transmit
 		TWDR = data;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if (twiStatus != TW_MT_DATA_ACK) {
 			retval = -1;
 			break;
 		}
 
 		// Transmission complete!
-		retval = 1;
 		break;
 	}
 
@@ -106,10 +111,10 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
 	return retval; 
 }
 
-int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
+int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint8_t dLen) {
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
-	int retval = -1;
+	int retval = 1;
 
 	while (retryCount < MAX_RETRIES) {
 		// Start command
@@ -124,7 +129,7 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
 
 		// Now send slave address... asking for a write
 		TWDR = ((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E) | TW_WRITE;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if ((twiStatus == TW_MT_SLA_NACK) || (twiStatus == TW_MT_ARB_LOST)) {
 			retryCount++;
 			continue;
@@ -139,7 +144,7 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
 
 		// Send MSB of register
 		TWDR = (reg >> 8) & 0xFF;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if (twiStatus != TW_MT_DATA_ACK) {
 			retval = -1;
 			break;
@@ -147,7 +152,7 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
 
 		// Send LSB of register
 		TWDR = (reg & 0xFF);
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);		
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);		
 		if (twiStatus != TW_MT_DATA_ACK) {
 			retval = -1;
 			break;
@@ -156,7 +161,7 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
 	
 		// 8 bit register address
 		TWDR = reg;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if (twiStatus != TW_MT_DATA_ACK) {
 			retval = -1;
 			break;
@@ -175,7 +180,7 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
 
 		// Now send slave address... asking for a read
 		TWDR = ((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E) | TW_READ;
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
+		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
 		if ((twiStatus == TW_MR_SLA_NACK) || (twiStatus == TW_MR_ARB_LOST)) {
 			retryCount++;
 			continue;
@@ -184,18 +189,27 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data) {
 			break;
 		}
 
-		// Read the data
-		twiStatus = I2C_internal_sendCommand(I2C_DataCommand);
- 		if (twiStatus != TW_MR_DATA_NACK) {
-			retval = -1;
-			break;
-		}
-		
-		// Read the data!
-		*data = TWDR;
-		twiStatus = I2C_internal_sendCommand(I2C_StopCommand);
+		for (int curData = 0; curData < dLen; curData++) {
+			// Read the data
 
-		retval = 1;
+			if (curData == (dLen - 1)) { // Last read... we need to send a NACK
+				twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
+				if (twiStatus != TW_MR_DATA_NACK) {
+					retval = -1;
+					break;
+				}
+			} else { // We have to perform other reads... send an ACK
+				twiStatus = I2C_internal_sendCommand(I2C_DataACKCommand);
+				if (twiStatus != TW_MR_DATA_ACK) {
+					retval = -1;
+					break;
+				}
+			}
+		
+			// Read the data!
+			data[curData] = TWDR;
+		}
+
 		break;
 	}
 
