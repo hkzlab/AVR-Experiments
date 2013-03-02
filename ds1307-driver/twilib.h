@@ -34,6 +34,6 @@ I2C_Config *I2C_buildDefaultConfig(void);
 void I2C_masterBegin(I2C_Config* config);
 
 int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint8_t dLen);
-int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data);
+int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint8_t dLen);
 
 #endif /* _TWILIB_HEADER_ */

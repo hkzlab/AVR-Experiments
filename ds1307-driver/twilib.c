@@ -60,7 +60,7 @@ uint8_t I2C_internal_sendCommand(I2C_CommandType command) {
 	return (TWSR & 0xF8);
 }
 
-int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
+int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint8_t dLen) {
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
 	int retval = 1;
@@ -95,12 +95,25 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t data) {
 			break;
 		}
 
-		// Put data into register and transmit
-		TWDR = data;
-		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
-		if (twiStatus != TW_MT_DATA_ACK) {
-			retval = -1;
-			break;
+	
+		// Data transmission
+		for (int curData = 0; curData < dLen; curData++) {
+			// Put data into register and transmit
+			TWDR = data[curData];
+
+			if (curData == (dLen - 1)) { // Last write... we need to send a NACK
+				twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
+				if (twiStatus != TW_MT_DATA_NACK) {
+					retval = -1;
+					break;
+				}
+			} else { // We have to perform other reads... send an ACK
+				twiStatus = I2C_internal_sendCommand(I2C_DataACKCommand);
+				if (twiStatus != TW_MT_DATA_ACK) {
+					retval = -1;
+					break;
+				}
+			}
 		}
 
 		// Transmission complete!

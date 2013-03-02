@@ -25,7 +25,10 @@ int main(void) {
 	dsDevice.address = 0;
 	I2C_masterBegin(masterConfig);
 
+	uint8_t dstData[2]; dstData[0] = 0x00; dstData[1] = 0x00;
 	uint8_t regData[2];
+
+	I2C_masterWriteRegisterByte(&dsDevice, 0x00, dstData, 2);
 	I2C_masterReadRegisterByte(&dsDevice, 0x00, regData, 2);
 
 	while (1) {
