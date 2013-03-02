@@ -28,6 +28,7 @@ typedef struct {
 // http://www.embedds.com/programming-avr-i2c-interface/
 // http://hackaday.com/2012/01/09/programming-avr-i2c-interface/
 // http://tutorialelectronic.com/?p=202
+// http://extremeelectronics.co.in/avr-tutorials/interfacing-ds1307-rtc-chip-with-avr-microcontroller/
 
 I2C_Config *I2C_buildDefaultConfig(void);
 void I2C_masterBegin(I2C_Config* config);
