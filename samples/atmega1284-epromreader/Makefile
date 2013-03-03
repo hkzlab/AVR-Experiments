@@ -51,7 +51,7 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c uart.c twilib.c
+SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/spi/spi.c ../../libs/mcp23s17/mcp23s17.c
 
 # List Assembler source files here.
 #     Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -100,7 +100,7 @@ CDEFS = -DF_CPU=$(F_CPU)UL
 
 
 # Place -I options here
-CINCS =
+CINCS = -I../../libs/ -I../../libs/spi/ -I../../libs/uart/ -I../../libs/mcp23s17/
 
 
 
