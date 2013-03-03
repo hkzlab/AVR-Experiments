@@ -12,6 +12,7 @@
 #include "uart.h"
 
 #include "twilib.h"
+#include "ds1307.h"
 
 int main(void) {
 	// Initialize serial port for output
@@ -19,31 +20,18 @@ int main(void) {
     stdout = &uart_output;
     stdin  = &uart_input;
 
-	uint8_t readData[8];
-	uint8_t writeData[7];
-	uint8_t readRegister = 0x00;
-
-	writeData[0] = 0x00;
-	writeData[1] = 0x33;
-	writeData[2] = 0x00;
-	writeData[3] = 0x7;
-	writeData[4] = 0x03;
-	writeData[5] = 0x03;
-	writeData[6] = 0x13;
+	DS1307_ToD time;
 
 	I2C_Config *masterConfig = I2C_buildDefaultConfig();
-	I2C_Device dsDevice;
-	dsDevice.id = 0xD;
-	dsDevice.address = 0;
 	I2C_masterBegin(masterConfig);
 
 	//I2C_masterWriteRegisterByte(&dsDevice, 0x00, writeData, 7);
-	I2C_masterReadRegisterByte(&dsDevice, &readRegister, 1, readData, 8);
 
 	while (1) {
+		DS1307_readToD(&time);
 		_delay_ms(3000);
-		fprintf(stdout, "%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", readData[0], readData[1], readData[2], readData[3], readData[4], readData[5], readData[6], readData[7]);
-		I2C_masterReadRegisterByte(&dsDevice, &readRegister, 1, readData, 8);
+
+		fprintf(stdout, "%.2u-%.2u-%.4u %.2u:%.2u:%.2u\n", time.dayOfMonth, time.month, time.year, time.hours, time.minutes, time.seconds);
 	}
 
     return 0;
