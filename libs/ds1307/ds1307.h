@@ -19,7 +19,7 @@ typedef enum {
 	DS1307_SQW_1Hz = 0,
 	DS1307_SQW_4096Hz = 1,
 	DS1307_SQW_8192Hz = 2,
-	DS1307_SQW_32768 = 3
+	DS1307_SQW_32768Hz = 3
 } DS1307_SQWFreq;
 
 int DS1307_readToD(DS1307_ToD *time);
