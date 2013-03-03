@@ -24,6 +24,9 @@ typedef enum {
 
 int DS1307_readToD(DS1307_ToD *time);
 int DS1307_writeToD(DS1307_ToD *time);
+
+// Set SQW enable status and freq. Remember that SQW/OUT is an _OPEN DRAIN_ pin,
+// and it *REQUIRES* a pull-up resistor on it!
 int DS1307_setSQW(uint8_t enable, uint8_t outControl, DS1307_SQWFreq freq);
 int DS1307_writeSRAM(uint8_t *data, uint8_t dLen);
 int DS1307_readSRAM(uint8_t *data, uint8_t dLen);
