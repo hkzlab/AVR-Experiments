@@ -25,7 +25,7 @@ int main(void) {
 	I2C_Config *masterConfig = I2C_buildDefaultConfig();
 	I2C_masterBegin(masterConfig);
 
-	//I2C_masterWriteRegisterByte(&dsDevice, 0x00, writeData, 7);
+	DS1307_readToD(&time);
 
 	while (1) {
 		DS1307_readToD(&time);

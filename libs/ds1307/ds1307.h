@@ -22,8 +22,10 @@ typedef enum {
 	DS1307_SQW_32768 = 3
 } DS1307_SQWFreq;
 
-void DS1307_readToD(DS1307_ToD *time);
-void DS1307_writeToD(DS1307_ToD *time);
-void DS1307_setSQW(uint8_t enable, uint8_t outControl, DS1307_SQWFreq freq);
+int DS1307_readToD(DS1307_ToD *time);
+int DS1307_writeToD(DS1307_ToD *time);
+int DS1307_setSQW(uint8_t enable, uint8_t outControl, DS1307_SQWFreq freq);
+int DS1307_writeSRAM(uint8_t *data, uint8_t dLen);
+int DS1307_readSRAM(uint8_t *data, uint8_t dLen);
 
 #endif /* _DS1307_HEADER_ */
