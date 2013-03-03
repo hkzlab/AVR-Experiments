@@ -22,6 +22,30 @@
 
 volatile uint8_t interruptReceived = 0;
 
+// Setup ADC
+// See here: http://www.avrbeginners.net/
+// http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=56429
+// http://www.protostack.com/blog/2011/02/analogue-to-digital-conversion-on-an-atmega168/
+// http://www.pjrc.com/teensy/adc.html
+uint16_t adc_read(void) {
+	uint8_t low, high;
+
+	ADCSRA |= (1 << ADSC); // Start ADC read
+
+	while (ADCSRA & (1 << ADSC)); // Wait for conversion to finish
+
+	low = ADCL;
+	high = ADCH;
+
+	return (high << 8) | low;
+}
+
+void adc_setup(uint8_t mux) {
+	ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+	ADMUX = (1 << REFS0) | mux;	
+	ADCSRA |= (1 << ADEN);
+}
+
 int main(void) {
 	char lcdString[80];
 
@@ -30,13 +54,7 @@ int main(void) {
     stdout = &uart_output;
     stdin  = &uart_input;
 
-	// Setup ADC
-	// See here: http://www.avrbeginners.net/
-	// http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=56429
-	// http://www.protostack.com/blog/2011/02/analogue-to-digital-conversion-on-an-atmega168/
-//	ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADEN);
-//	ADMUX = (1 << REFS0) | 0x7;
-
+	adc_setup(0x07);
 
 	// Setup the LCD
 	DDRB = 0xFF; // Set port B as output!
@@ -59,6 +77,7 @@ int main(void) {
 	PCMSK2 |= 1 << PCINT23;
 	sei();
 
+
 	_delay_ms(500);
 	fprintf(stdout, "Start loop...\n");	
 
@@ -66,16 +85,10 @@ int main(void) {
 		if (interruptReceived) {
 			interruptReceived = 0;
 			DS1307_readToD(&time);
-			sprintf(lcdString, "%.2u-%.2u-%.4u\n%.2u:%.2u:%.2u", time.dayOfMonth, time.month, time.year, time.hours, time.minutes, time.seconds);
+
+			sprintf(lcdString, "%.2u-%.2u-%.4u\n%.2u:%.2u:%.2u\n\n0x%.4X", time.dayOfMonth, time.month, time.year, time.hours, time.minutes, time.seconds, adc_read());
 			hd44780_hl_printText(connDriver, 0, 0, lcdString);
-
-
 		}
-/*			ADCSRA |= (1 << ADSC);
-			while (ADCSRA & (1 << ADSC)); // Busy wait...
-			uint16_t analogRead = (ADCH << 8 | ADCL);
-			fprintf(stdout, "ANALOG %.4X\n", analogRead);
-*/
 	}
 
     return 0;
