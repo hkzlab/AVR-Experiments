@@ -21,6 +21,7 @@ int main(void) {
 
 	uint8_t readData[8];
 	uint8_t writeData[7];
+	uint8_t readRegister = 0x00;
 
 	writeData[0] = 0x00;
 	writeData[1] = 0x33;
@@ -37,12 +38,12 @@ int main(void) {
 	I2C_masterBegin(masterConfig);
 
 	//I2C_masterWriteRegisterByte(&dsDevice, 0x00, writeData, 7);
-	I2C_masterReadRegisterByte(&dsDevice, 0x00, readData, 8);
+	I2C_masterReadRegisterByte(&dsDevice, &readRegister, 1, readData, 8);
 
 	while (1) {
 		_delay_ms(3000);
 		fprintf(stdout, "%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", readData[0], readData[1], readData[2], readData[3], readData[4], readData[5], readData[6], readData[7]);
-		I2C_masterReadRegisterByte(&dsDevice, 0x00, readData, 8);
+		I2C_masterReadRegisterByte(&dsDevice, &readRegister, 1, readData, 8);
 	}
 
     return 0;

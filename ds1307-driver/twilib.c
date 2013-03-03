@@ -60,7 +60,7 @@ uint8_t I2C_internal_sendCommand(I2C_CommandType command) {
 	return (TWSR & 0xF8);
 }
 
-int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint8_t dLen) {
+int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
 	int retval = 1;
@@ -87,14 +87,16 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uin
 			break;
 		}
 
-		// 8 bit register address
-		TWDR = reg;
-		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
-		if (twiStatus != TW_MT_DATA_ACK) {
-			retval = -1;
-			break;
+		// Send register address
+		for (int curReg = 0; curReg < rLen; curReg++) {
+			TWDR = reg[curReg];
+			twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
+			if (twiStatus != TW_MT_DATA_ACK) {
+				retval = -1;
+				break;
+			}		
 		}
-
+		if (retval == -1) break; // Something bad happened sending the register address
 	
 		// Data transmission
 		for (int curData = 0; curData < dLen; curData++) {
@@ -124,7 +126,7 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uin
 	return retval; 
 }
 
-int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint8_t dLen) {
+int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
 	int retval = 1;
@@ -151,35 +153,16 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t reg, uint8_t *data, uint
 			break;
 		}
 
-
-/*
-   		// 16 bit register address, maybe move this to a different function?
-
-		// Send MSB of register
-		TWDR = (reg >> 8) & 0xFF;
-		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
-		if (twiStatus != TW_MT_DATA_ACK) {
-			retval = -1;
-			break;
+		// Send register address
+		for (int curReg = 0; curReg < rLen; curReg++) {
+			TWDR = reg[curReg];
+			twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
+			if (twiStatus != TW_MT_DATA_ACK) {
+				retval = -1;
+				break;
+			}		
 		}
-
-		// Send LSB of register
-		TWDR = (reg & 0xFF);
-		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);		
-		if (twiStatus != TW_MT_DATA_ACK) {
-			retval = -1;
-			break;
-		}
-*/
-	
-		// 8 bit register address
-		TWDR = reg;
-		twiStatus = I2C_internal_sendCommand(I2C_DataNACKCommand);
-		if (twiStatus != TW_MT_DATA_ACK) {
-			retval = -1;
-			break;
-		}
-
+		if (retval == -1) break; // Something bad happened sending the register address
 
 		// Send start command again.
 		twiStatus = I2C_internal_sendCommand(I2C_StartCommand);
