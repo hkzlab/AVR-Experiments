@@ -20,31 +20,16 @@
 #include "hd44780-avr-interface.h"
 #include "hd44780-highlevel.h"
 
+#include "analog_sensors.h"
+
 volatile uint8_t interruptReceived = 0;
 
-// Setup ADC
-// See here: http://www.avrbeginners.net/
-// http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=56429
-// http://www.protostack.com/blog/2011/02/analogue-to-digital-conversion-on-an-atmega168/
-// http://www.pjrc.com/teensy/adc.html
-uint16_t adc_read(void) {
-	uint8_t low, high;
+#define SERIES_RESISTOR 10012.0f // ~10 kOHM
+#define REF_VOLTAGE 5.0f
+#define THERMISTOR_NOMINAL 12000.0f
+#define TEMPERATURE_NOMINAL 25.0f
+#define B_COEFFICIENT 3760
 
-	ADCSRA |= (1 << ADSC); // Start ADC read
-
-	while (ADCSRA & (1 << ADSC)); // Wait for conversion to finish
-
-	low = ADCL;
-	high = ADCH;
-
-	return (high << 8) | low;
-}
-
-void adc_setup(uint8_t mux) {
-	ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-	ADMUX = (1 << REFS0) | mux;	
-	ADCSRA |= (1 << ADEN);
-}
 
 int main(void) {
 	char lcdString[80];
@@ -54,7 +39,7 @@ int main(void) {
     stdout = &uart_output;
     stdin  = &uart_input;
 
-	adc_setup(0x07);
+	setupADC(0x07);
 
 	// Setup the LCD
 	DDRB = 0xFF; // Set port B as output!
@@ -81,19 +66,25 @@ int main(void) {
 	_delay_ms(500);
 	fprintf(stdout, "Start loop...\n");	
 
+	uint16_t adc_val = readADC();
 	while (1) {
 		if (interruptReceived) {
 			interruptReceived = 0;
 			DS1307_readToD(&time);
 
-			sprintf(lcdString, "%.2u-%.2u-%.4u\n%.2u:%.2u:%.2u\n\n0x%.4X", time.dayOfMonth, time.month, time.year, time.hours, time.minutes, time.seconds, adc_read());
+			sprintf(lcdString, "%.2u-%.2u-%.4u\n%.2u:%.2u:%.2u\n\n%.1fC", time.dayOfMonth, time.month, time.year, time.hours, time.minutes, time.seconds, adcReadToTemp(adc_val, REF_VOLTAGE, SERIES_RESISTOR, THERMISTOR_NOMINAL, TEMPERATURE_NOMINAL, B_COEFFICIENT));
 			hd44780_hl_printText(connDriver, 0, 0, lcdString);
 		}
+
+		adc_val = (adc_val +  readADC()) / 2;
 	}
 
     return 0;
 }
 
 ISR(PCINT2_vect) {
-	interruptReceived = 1;
+	static uint8_t counter = 0;
+
+	if (!(++counter % 2))
+		interruptReceived = 1;
 }
