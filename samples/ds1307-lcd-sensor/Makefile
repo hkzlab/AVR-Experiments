@@ -33,6 +33,7 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
+include ../common.mk
 
 # MCU name
 MCU = atmega1284p
@@ -42,7 +43,8 @@ MCU = atmega1284p
 #     processor frequency. You can then use this symbol in your source code to 
 #     calculate timings. Do NOT tack on a 'UL' at the end, this will be done
 #     automatically to create a 32-bit value in your source code.
-F_CPU = 8000000
+#F_CPU = 8000000
+#F_CPU = 10000000
 
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
@@ -217,7 +219,7 @@ AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 # to submit bug reports.
 #AVRDUDE_VERBOSE = -v -v
 
-AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -b 19200 -D
+AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -b $(AVRDUDE_BRATE) -D
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
