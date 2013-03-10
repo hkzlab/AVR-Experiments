@@ -35,15 +35,15 @@ int main(void) {
     stdout = &uart_output;
     stdin  = &uart_input;
 
-	setupADC(0x07);
+	setupADC(0x02);
 
 	// Setup the LCD
 	DDRB = 0xFF; // Set port B as output!
 	PORTB = 0x00; // And zero it
-	hd44780_connection *conn_struct = hd44780_createConnection(&PORTB, 1, &PORTB, 0, &PORTB, 1, &PORTB, 2);
+	hd44780_connection *conn_struct = hd44780_createConnection(&PORTB, 0, &PORTB, 5, &PORTB, 4, &PORTB, 6);
 	hd44780_driver *connDriver = hd44780_hl_createDriver(TMBC20464BSP_20x4, conn_struct, (uint8_t (*)(void*))hd44780_initLCD4Bit, (void (*)(void*, uint16_t))hd44780_sendCommand);
 	hd44780_hl_init(connDriver, 0, 0);
-	
+
 	I2C_Config *masterConfig = I2C_buildDefaultConfig();
 	I2C_masterBegin(masterConfig);
 
@@ -51,11 +51,11 @@ int main(void) {
 	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);
 	DS1307_readToD(&time);
 
-	DDRC &= 0x7F;
-	PORTC |= 0x80;
+	DDRC &= 0xF7;
+	PORTC |= 0x8;
 	// See here for interrupts http://www.protostack.com/blog/2010/09/external-interrupts-on-an-atmega168/
-	PCICR |= 1 << PCIE2;
-	PCMSK2 |= 1 << PCINT23;
+	PCICR |= 1 << PCIE1;
+	PCMSK1 |= 1 << PCINT11;
 	sei();
 
 
@@ -78,7 +78,7 @@ int main(void) {
     return 0;
 }
 
-ISR(PCINT2_vect) {
+ISR(PCINT1_vect) {
 	static uint8_t counter = 0;
 
 	if (!(++counter % 2))

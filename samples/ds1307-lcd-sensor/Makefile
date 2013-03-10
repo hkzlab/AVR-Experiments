@@ -36,7 +36,7 @@
 include ../common.mk
 
 # MCU name
-MCU = atmega1284p
+MCU = atmega328p
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the 

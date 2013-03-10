@@ -3,7 +3,8 @@
 
 #ifndef BAUD
 #define BAUD 19200
-#endif
+#endif 
+
 #include <util/setbaud.h>
 
 /* http://www.cs.mun.ca/~rod/Winter2007/4723/notes/serial/serial.html */
