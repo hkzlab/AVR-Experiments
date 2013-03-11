@@ -36,7 +36,7 @@ void shf74595_initConnection(shifter_74595_conn *conn) {
 
 void shf74595_pushData(shifter_74595_conn *conn, uint8_t data, uint8_t count) {
 	while (count--) {
-		if (data & 0x1)
+		if (data & 0x80)
 			ENABLE_PIN(*conn->inpPort, conn->inpPin);
 		else
 			DISABLE_PIN(*conn->inpPort, conn->inpPin);
@@ -46,7 +46,7 @@ void shf74595_pushData(shifter_74595_conn *conn, uint8_t data, uint8_t count) {
 		DISABLE_PIN(*conn->clkPort, conn->clkPin);
 	//	asm("nop");
 		
-		data >>= 1;
+		data <<= 1;
 	}
 }
 

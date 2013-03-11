@@ -7,6 +7,8 @@
 #include "uart.h"
 
 #include "shifter_74595.h"
+#include "hd44780-74595-interface.h"
+#include "hd44780-highlevel.h"
 
 int main(void) {
 	// Initialize serial port for output
@@ -23,13 +25,14 @@ int main(void) {
 	shifter_74595_conn *shfConn = shf74595_createConnection(&PORTD, 5, &PORTD, 7, &PORTB, 0, &PORTB, 1);
 	shf74595_initConnection(shfConn);
 
-	uint8_t counter = 0;
-	while (1) {
-		shf74595_pushData(shfConn, counter, 8);
-		shf74595_latchData(shfConn);
-		_delay_ms(50);
+	hd44780_74595_connection *conn_struct = hd44780_74595_createConnection(shfConn, 0, 5, 4);
+	hd44780_driver *connDriver = hd44780_hl_createDriver(TMBC20464BSP_20x4, conn_struct, (uint8_t (*)(void*))hd44780_74595_initLCD4Bit, (void (*)(void*, uint16_t))hd44780_74595_sendCommand);
 
-		counter++;
+	hd44780_hl_init(connDriver, 0, 0);
+	
+
+	hd44780_hl_printText(connDriver, 0, 0, "Ciao!\nIo funziono con uno\nshifter di tipo\n74HC595!");
+	while (1) {
 	}
 
     return 0;
