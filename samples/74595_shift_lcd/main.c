@@ -32,6 +32,23 @@ int main(void) {
 	
 
 	hd44780_hl_printText(connDriver, 0, 0, "Ciao!\nIo funziono con uno\nshifter di tipo\n74HC595!");
+
+	_delay_ms(3000);
+
+	uint8_t data[1][8] = {{0b00001110,
+						   0b00011111,
+						   0b00010101,
+						   0b00011111,
+						   0b00001010,
+						   0b00001110,
+						   0b00001010,
+						   0b0000000}};
+
+	hd44780_hl_setCustomFont(connDriver, 5, data[0]);
+
+	hd44780_hl_printChar(connDriver, 3,8, 5);	
+
+
 	while (1) {
 	}
 
