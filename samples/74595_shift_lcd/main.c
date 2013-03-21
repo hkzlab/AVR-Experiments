@@ -35,21 +35,32 @@ int main(void) {
 
 	_delay_ms(3000);
 
-	uint8_t data[1][8] = {{0b00001110,
+	uint8_t data[2][8] = {{0b00001110,
 						   0b00011111,
 						   0b00010101,
 						   0b00011111,
 						   0b00001010,
 						   0b00001110,
 						   0b00001010,
-						   0b0000000}};
+						   0b0000000},
+						  {0b00001010,
+						   0b00011111,
+						   0b00011111,
+						   0b00011111,
+						   0b00001110,
+						   0b00001110,
+						   0b00000100,
+						   0b00000000}};
 
-	hd44780_hl_setCustomFont(connDriver, 5, data[0]);
+	hd44780_hl_setCustomFont(connDriver, 0, data[0]);
+	hd44780_hl_setCustomFont(connDriver, 1, data[1]);
 
-	hd44780_hl_printChar(connDriver, 3,8, 5);	
-
-
+	uint8_t counter = 0;
 	while (1) {
+		hd44780_hl_printChar(connDriver, 3, 8, counter);
+
+		counter = (counter + 1) % 2;
+		_delay_ms(1000);
 	}
 
     return 0;
