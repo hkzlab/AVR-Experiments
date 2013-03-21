@@ -3,9 +3,13 @@
 #include <stdio.h>
 #include <util/delay.h>
 
+#include "USI_TWI_Master.h"
+
 #include "main.h"
 
 int main(void) {
+	USI_TWI_Master_Initialise();
+
 	DDRD = 0x40;
 
 	while (1) {
