@@ -19,14 +19,14 @@
 *                     the USI module as basis. The implementation assumes the AVR to
 *                     be the only TWI master in the system and can therefore not be
 *                     used in a multi-master system.
-* Usage             : Initialize the USI module by calling the USI_TWI_Master_Initialise() 
+* Usage             : Initialize the USI module by calling the USI_TWI_Master_Initialise()
 *                     function. Hence messages/data are transceived on the bus using
 *                     the USI_TWI_Start_Transceiver_With_Data() function. If the transceiver
-*                     returns with a fail, then use USI_TWI_Get_Status_Info to evaluate the 
+*                     returns with a fail, then use USI_TWI_Get_Status_Info to evaluate the
 *                     couse of the failure.
 *
 ****************************************************************************/
-    
+
 //********** Defines **********//
 
 // Defines controlling timing limits
@@ -37,14 +37,14 @@
 #ifdef TWI_FAST_MODE               // TWI FAST mode timing limits. SCL = 100-400kHz
 //  #define T2_TWI    ((SYS_CLK *1300) /1000000) +1 // >1,3us
 //  #define T4_TWI    ((SYS_CLK * 600) /1000000) +1 // >0,6us
-#  define T2_TWI	1.3  
-#  define T4_TWI	0.6
+#  define T2_TWI    1.3
+#  define T4_TWI    0.6
 
 #else                              // TWI STANDARD mode timing limits. SCL <= 100kHz
 //  #define T2_TWI    ((SYS_CLK *4700) /1000000) +1 // >4,7us
 //  #define T4_TWI    ((SYS_CLK *4000) /1000000) +1 // >4,0us
-#  define T2_TWI	4.7
-#  define T4_TWI	4.0
+#  define T2_TWI    4.7
+#  define T4_TWI    4.0
 #endif
 
 // Defines controling code generating
@@ -80,34 +80,34 @@
     defined(__AVR_ATmega645__) | defined(__AVR_ATmega6450__) | \
     defined(__AVR_ATmega329__) | defined(__AVR_ATmega3290__) | \
     defined(__AVR_ATmega649__) | defined(__AVR_ATmega6490__)
-    #define DDR_USI             DDRE
-    #define PORT_USI            PORTE
-    #define PIN_USI             PINE
-    #define PORT_USI_SDA        PORTE5
-    #define PORT_USI_SCL        PORTE4
-    #define PIN_USI_SDA         PINE5
-    #define PIN_USI_SCL         PINE4
+#define DDR_USI             DDRE
+#define PORT_USI            PORTE
+#define PIN_USI             PINE
+#define PORT_USI_SDA        PORTE5
+#define PORT_USI_SCL        PORTE4
+#define PIN_USI_SDA         PINE5
+#define PIN_USI_SCL         PINE4
 #endif
 
 #if defined(__AVR_ATtiny25__) | defined(__AVR_ATtiny45__) | defined(__AVR_ATtiny85__) | \
     defined(__AVR_AT90Tiny26__) | defined(__AVR_ATtiny26__)
-    #define DDR_USI             DDRB
-    #define PORT_USI            PORTB
-    #define PIN_USI             PINB
-    #define PORT_USI_SDA        PORTB0
-    #define PORT_USI_SCL        PORTB2
-    #define PIN_USI_SDA         PINB0
-    #define PIN_USI_SCL         PINB2
+#define DDR_USI             DDRB
+#define PORT_USI            PORTB
+#define PIN_USI             PINB
+#define PORT_USI_SDA        PORTB0
+#define PORT_USI_SCL        PORTB2
+#define PIN_USI_SDA         PINB0
+#define PIN_USI_SCL         PINB2
 #endif
 
 #if defined(__AVR_AT90Tiny2313__) | defined(__AVR_ATtiny2313__)
-    #define DDR_USI             DDRB
-    #define PORT_USI            PORTB
-    #define PIN_USI             PINB
-    #define PORT_USI_SDA        PORTB5
-    #define PORT_USI_SCL        PORTB7
-    #define PIN_USI_SDA         PINB5
-    #define PIN_USI_SCL         PINB7
+#define DDR_USI             DDRB
+#define PORT_USI            PORTB
+#define PIN_USI             PINB
+#define PORT_USI_SDA        PORTB5
+#define PORT_USI_SCL        PORTB7
+#define PIN_USI_SDA         PINB5
+#define PIN_USI_SCL         PINB7
 #endif
 
 // General defines
@@ -116,6 +116,6 @@
 
 //********** Prototypes **********//
 
-void          USI_TWI_Master_Initialise( void );
-unsigned char USI_TWI_Start_Transceiver_With_Data( unsigned char * , unsigned char );
-unsigned char USI_TWI_Get_State_Info( void );
+void          USI_TWI_Master_Initialise(void);
+unsigned char USI_TWI_Start_Transceiver_With_Data(unsigned char * , unsigned char);
+unsigned char USI_TWI_Get_State_Info(void);
