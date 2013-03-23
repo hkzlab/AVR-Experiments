@@ -50,7 +50,7 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c ../../libs/uart/uart.c USI_TWI_Master/USI_TWI_Master.c
+SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/twilib/twilib.c ../../libs/twilib/AVR310_USI_TWI_Master/USI_TWI_Master.c ../../libs/ds1307/ds1307.c
 
 # List Assembler source files here.
 #     Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -99,7 +99,7 @@ CDEFS = -DF_CPU=$(F_CPU)UL
 
 
 # Place -I options here
-CINCS = -I../../libs/ -I../../libs/uart/ -I./USI_TWI_Master
+CINCS = -I../../libs/ -I../../libs/uart/ -I../../libs/twilib/ -I../../libs/ds1307/
 
 
 
@@ -155,7 +155,7 @@ SCANF_LIB =
 #SCANF_LIB = $(SCANF_LIB_FLOAT)
 
 
-MATH_LIB = -lm
+#MATH_LIB = -lm
 
 
 
@@ -211,7 +211,7 @@ AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 # to submit bug reports.
 #AVRDUDE_VERBOSE = -v -v
 
-AVRDUDE_PORT=/dev/cu.usbmodem1411
+AVRDUDE_PORT=/dev/cu.usbmodem641
 AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -B2
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)

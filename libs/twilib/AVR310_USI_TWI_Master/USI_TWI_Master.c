@@ -90,7 +90,7 @@ unsigned char USI_TWI_Start_Transceiver_With_Data(unsigned char *msg, unsigned c
 	USI_TWI_state.errorState = 0;
 	USI_TWI_state.addressMode = TRUE;
 
-	USI_TWI_state.masterWriteDataMode = FALSE;
+//	USI_TWI_state.masterWriteDataMode = FALSE;
 
 #ifdef PARAM_VERIFICATION
 	if (msg > (unsigned char *)RAMEND) {             // Test if address is outside SRAM space
@@ -135,6 +135,11 @@ unsigned char USI_TWI_Start_Transceiver_With_Data(unsigned char *msg, unsigned c
 	PORT_USI &= ~(1 << PIN_USI_SDA);                  // Force SDA LOW.
 	_delay_us(T4_TWI);
 	PORT_USI &= ~(1 << PIN_USI_SCL);                  // Pull SCL LOW.
+#ifdef TWI_FAST_MODE
+	_delay_us(T4_TWI);                           // Delay for T4TWI if TWI_FAST_MODE
+#else
+	_delay_us(T2_TWI);                           // Delay for T2TWI if TWI_STANDARD_MODE
+#endif
 	PORT_USI |= (1 << PIN_USI_SDA);                   // Release SDA.
 
 #ifdef SIGNAL_VERIFY
