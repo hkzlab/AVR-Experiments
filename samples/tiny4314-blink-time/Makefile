@@ -34,7 +34,8 @@
 #----------------------------------------------------------------------------
 
 # MCU name
-MCU = attiny2313
+#MCU = attiny2313
+MCU = attiny4313
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the 
@@ -115,6 +116,7 @@ CFLAGS = -g$(DEBUG)
 CFLAGS += $(CDEFS) $(CINCS)
 CFLAGS += -O$(OPT)
 CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+#CFLAGS += -maccumulate-args -mint8 -mcall-prologues -mno-interrupts
 CFLAGS += -Wall -Wstrict-prototypes
 CFLAGS += -Wa,-adhlns=$(<:.c=.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))

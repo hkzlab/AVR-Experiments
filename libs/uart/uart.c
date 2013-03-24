@@ -23,7 +23,11 @@
 #define UCSZ00 UCSZ0
 #define UCSZ01 UCSZ1
 
+#ifdef UDR0 // ATTiny4313 headers have this already defined
+#undef UDR0
 #define UDR0 UDR
+#endif
+
 #define UDRE0 UDRE
 
 #define RXC0 RXC
