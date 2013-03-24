@@ -118,6 +118,6 @@
 
 //********** Prototypes **********//
 
-void          USI_TWI_Master_Initialise(void);
+void    USI_TWI_Master_Initialise(void);
 uint8_t USI_TWI_Start_Transceiver_With_Data(uint8_t *msg, uint8_t msgSize);
 uint8_t USI_TWI_Get_State_Info(void);

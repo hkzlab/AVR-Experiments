@@ -6,6 +6,7 @@
 #if defined(__AVR_AT90Tiny2313__) | defined(__AVR_ATtiny2313__) | defined(__AVR_ATtiny4313__)
 
 #include "AVR310_USI_TWI_Master/USI_TWI_Master.h"
+
 #define USI_TWI 1 // These devices have an USI port
 #define MAX_REQ_BUF 10
 

@@ -27,7 +27,7 @@ int main(void) {
 	while (1) {
 		shf74595_pushData(shfConn, counter, 8);
 		shf74595_latchData(shfConn);
-		_delay_ms(50);
+	//	_delay_ms(50);
 
 		counter++;
 	}
