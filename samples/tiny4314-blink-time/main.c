@@ -60,7 +60,7 @@ int main(void) {
 			DS1307_readToD(&ToD);			
 
 			PORTD ^= 0x40;
-			shf74595_pushData(shfConn, ToD.seconds, 8);
+			shf74595_pushData(shfConn, ToD.minutes, 8);
 			shf74595_latchData(shfConn);
 		}
 
