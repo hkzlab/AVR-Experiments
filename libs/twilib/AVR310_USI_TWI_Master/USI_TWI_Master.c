@@ -32,15 +32,15 @@
 #include <util/delay.h>
 #include "USI_TWI_Master.h"
 
-unsigned char USI_TWI_Master_Transfer(unsigned char);
-unsigned char USI_TWI_Master_Stop(void);
+uint8_t USI_TWI_Master_Transfer(uint8_t);
+uint8_t USI_TWI_Master_Stop(void);
 
 union  USI_TWI_state {
-	unsigned char errorState;         // Can reuse the TWI_state for error states due to that it will not be need if there exists an error.
+	uint8_t errorState;         // Can reuse the TWI_state for error states due to that it will not be need if there exists an error.
 	struct {
-		unsigned char addressMode         : 1;
-		unsigned char masterWriteDataMode : 1;
-		unsigned char unused              : 6;
+		uint8_t addressMode         : 1;
+		uint8_t masterWriteDataMode : 1;
+		uint8_t unused              : 6;
 	};
 }   USI_TWI_state;
 
@@ -66,7 +66,7 @@ void USI_TWI_Master_Initialise(void) {
 /*---------------------------------------------------------------
 Use this function to get hold of the error message from the last transmission
 ---------------------------------------------------------------*/
-unsigned char USI_TWI_Get_State_Info(void) {
+uint8_t USI_TWI_Get_State_Info(void) {
 	return (USI_TWI_state.errorState);                              // Return error state.
 }
 
@@ -81,19 +81,18 @@ unsigned char USI_TWI_Get_State_Info(void) {
  Success or error code is returned. Error codes are defined in
  USI_TWI_Master.h
 ---------------------------------------------------------------*/
-unsigned char USI_TWI_Start_Transceiver_With_Data(unsigned char *msg, unsigned char msgSize) {
-	unsigned char tempUSISR_8bit = (1 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | // Prepare register value to: Clear flags, and
+uint8_t USI_TWI_Start_Transceiver_With_Data(uint8_t *msg, uint8_t msgSize) {
+	uint8_t tempUSISR_8bit = (1 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | // Prepare register value to: Clear flags, and
 	                               (0x0 << USICNT0);                                   // set USI to shift 8 bits i.e. count 16 clock edges.
-	unsigned char tempUSISR_1bit = (1 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | // Prepare register value to: Clear flags, and
+	uint8_t tempUSISR_1bit = (1 << USISIF) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) | // Prepare register value to: Clear flags, and
 	                               (0xE << USICNT0);                                   // set USI to shift 1 bit i.e. count 2 clock edges.
 
 	USI_TWI_state.errorState = 0;
 	USI_TWI_state.addressMode = TRUE;
-
-//	USI_TWI_state.masterWriteDataMode = FALSE;
+//	USI_TWI_state.masterWriteDataMode = FALSE; // No need to explicitly set this to false, as it is located inside an union set to false by errorState = 0
 
 #ifdef PARAM_VERIFICATION
-	if (msg > (unsigned char *)RAMEND) {             // Test if address is outside SRAM space
+	if (msg > (uint8_t *)RAMEND) {             // Test if address is outside SRAM space
 		USI_TWI_state.errorState = USI_TWI_DATA_OUT_OF_BOUND;
 		return (FALSE);
 	}
@@ -196,7 +195,7 @@ unsigned char USI_TWI_Start_Transceiver_With_Data(unsigned char *msg, unsigned c
  Data to be sent has to be placed into the USIDR prior to calling
  this function. Data read, will be return'ed from the function.
 ---------------------------------------------------------------*/
-unsigned char USI_TWI_Master_Transfer(unsigned char temp) {
+uint8_t USI_TWI_Master_Transfer(uint8_t temp) {
 	USISR = temp;                                     // Set USISR according to temp.
 	// Prepare clocking.
 	temp  = (0 << USISIE) | (0 << USIOIE) |           // Interrupts disabled
@@ -223,7 +222,7 @@ unsigned char USI_TWI_Master_Transfer(unsigned char temp) {
  Function for generating a TWI Stop Condition. Used to release
  the TWI bus.
 ---------------------------------------------------------------*/
-unsigned char USI_TWI_Master_Stop(void) {
+uint8_t USI_TWI_Master_Stop(void) {
 	PORT_USI &= ~(1 << PIN_USI_SDA);         // Pull SDA low.
 	PORT_USI |= (1 << PIN_USI_SCL);          // Release SCL.
 	while (!(PIN_USI & (1 << PIN_USI_SCL))); // Wait for SCL to go high.
@@ -240,3 +239,4 @@ unsigned char USI_TWI_Master_Stop(void) {
 
 	return (TRUE);
 }
+
