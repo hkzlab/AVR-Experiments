@@ -4,10 +4,11 @@
 #include <stdlib.h>
 
 #if defined(__AVR_AT90Tiny2313__) | defined(__AVR_ATtiny2313__) | defined(__AVR_ATtiny4313__)
-#include "AVR310_USI_TWI_Master/USI_TWI_Master.h"
-#define USI_TWI 1
 
-#define TWI_GEN_CALL         0x00  // The General Call address is 0
+#include "AVR310_USI_TWI_Master/USI_TWI_Master.h"
+#define USI_TWI 1 // These devices have an USI port
+#define MAX_REQ_BUF 9
+
 #endif
 
 #define MAX_RETRIES 20
@@ -76,7 +77,9 @@ uint8_t I2C_internal_sendCommand(I2C_CommandType command) {
 
 int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
 #ifdef USI_TWI
-	uint8_t cmd_buf[16]; // For speed reasons, use a static buffer...
+	uint8_t cmd_buf[MAX_REQ_BUF]; // For speed reasons, use a static buffer...
+	if (dLen >= MAX_REQ_BUF) dLen = MAX_REQ_BUF - 1;
+
 	cmd_buf[0] = (((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E)) | (FALSE << TWI_READ_BIT);
 	
 	for (uint8_t curReg = 0; curReg < rLen; curReg++) {
@@ -159,7 +162,9 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uin
 
 int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
 #ifdef USI_TWI
-	uint8_t cmd_buf[16];
+	uint8_t cmd_buf[MAX_REQ_BUF]; // For speed reasons, use a static buffer...
+	if (dLen >= MAX_REQ_BUF) dLen = MAX_REQ_BUF - 1;
+
 	cmd_buf[0] = (((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E)) | (FALSE << TWI_READ_BIT);
 	
 	for (int curReg = 0; curReg < rLen; curReg++) {
