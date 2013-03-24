@@ -7,7 +7,7 @@
 
 #include "AVR310_USI_TWI_Master/USI_TWI_Master.h"
 #define USI_TWI 1 // These devices have an USI port
-#define MAX_REQ_BUF 9
+#define MAX_REQ_BUF 10
 
 #endif
 
@@ -75,10 +75,10 @@ uint8_t I2C_internal_sendCommand(I2C_CommandType command) {
 }
 #endif
 
-int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
+int16_t I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
 #ifdef USI_TWI
 	uint8_t cmd_buf[MAX_REQ_BUF]; // For speed reasons, use a static buffer...
-	if (dLen >= MAX_REQ_BUF) dLen = MAX_REQ_BUF - 1;
+	if (dLen +rLen >= MAX_REQ_BUF) dLen = MAX_REQ_BUF - (rLen + 1);
 
 	cmd_buf[0] = (((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E)) | (FALSE << TWI_READ_BIT);
 	
@@ -91,11 +91,11 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uin
 
 	int retval = USI_TWI_Start_Transceiver_With_Data(cmd_buf, dLen + 1 + rLen);
 
-	return (retval == TRUE) ? 1 : -1;
+	return (retval == TRUE) ? dLen : -1;
 #else
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
-	int retval = 1;
+	int16_t retval = dLen;
 
 	while (retryCount < MAX_RETRIES) {
 		// Start command
@@ -156,14 +156,14 @@ int I2C_masterWriteRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uin
 
 	twiStatus = I2C_internal_sendCommand(I2C_StopCommand);	
 	
-	return 1; 
+	return retval; 
 #endif
 }
 
-int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
+int16_t I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint8_t *data, uint8_t dLen) {
 #ifdef USI_TWI
 	uint8_t cmd_buf[MAX_REQ_BUF]; // For speed reasons, use a static buffer...
-	if (dLen >= MAX_REQ_BUF) dLen = MAX_REQ_BUF - 1;
+	if (dLen +rLen >= MAX_REQ_BUF) dLen = MAX_REQ_BUF - (rLen + 1);
 
 	cmd_buf[0] = (((dev->id << 4) & 0xF0) | ((dev->address << 1) & 0x0E)) | (FALSE << TWI_READ_BIT);
 	
@@ -183,11 +183,11 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint
 	for (uint8_t bufIdx = 0; bufIdx < dLen; bufIdx++)
 		data[bufIdx] = cmd_buf[bufIdx + 1];
 
-	return (retval == TRUE) ? 1 : -1;
+	return (retval == TRUE) ? dLen : -1;
 #else
 	uint8_t twiStatus;
 	uint8_t retryCount = 0;
-	int retval = 1;
+	int16_t retval = dLen;
 
 	while (retryCount < MAX_RETRIES) {
 		// Start command
@@ -268,6 +268,7 @@ int I2C_masterReadRegisterByte(I2C_Device *dev, uint8_t *reg, uint8_t rLen, uint
 	}
 
 	twiStatus = I2C_internal_sendCommand(I2C_StopCommand);	
+
 	return retval; 
 #endif
 }
