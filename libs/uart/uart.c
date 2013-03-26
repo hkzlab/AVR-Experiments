@@ -31,11 +31,20 @@
 #define UDRE0 UDRE
 
 #define RXC0 RXC
+
+#define U2X0 U2X
+
 #endif
 
 void uart_init(void) {
     UBRR0H = UBRRH_VALUE;
     UBRR0L = UBRRL_VALUE;
+
+#if USE_2X
+	UCSR0A |= (1 << U2X0);
+#else
+	UCSR0A &= ~(1 << U2X0);
+#endif
 
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00); /* 8-bit data */ 
     UCSR0B = (1 << RXEN0) | (1 << TXEN0);   /* Enable RX and TX */    
