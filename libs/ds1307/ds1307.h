@@ -31,4 +31,6 @@ int DS1307_setSQW(uint8_t enable, uint8_t outControl, DS1307_SQWFreq freq);
 int DS1307_writeSRAM(uint8_t *data, uint8_t dLen);
 int DS1307_readSRAM(uint8_t *data, uint8_t dLen);
 
+uint8_t dayOfWeek(uint8_t dayInMonth, uint8_t month, uint16_t year);
+
 #endif /* _DS1307_HEADER_ */

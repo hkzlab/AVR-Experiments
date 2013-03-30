@@ -86,3 +86,9 @@ int DS1307_readSRAM(uint8_t *data, uint8_t dLen) {
 
 	return I2C_masterReadRegisterByte(&ds1307_dev, &startRegister, 1, data, dLen);
 }
+
+uint8_t dayOfWeek(uint8_t dayInMonth, uint8_t month, uint16_t year) {
+	uint8_t t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+	year -= (month < 3);
+	return (year + (year >> 2) - (y/100) + (y/400) + t[month - 1] + dayInMonth) % 7;
+}
