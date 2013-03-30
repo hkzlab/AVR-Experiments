@@ -16,13 +16,10 @@ int main(void) {
     stdout = &uart_output;
     stdin  = &uart_input;
 
-	DDRD = 0xFC;
-	DDRB = 0xFF;
-	
-	PORTD &= 0x03;
-	PORTB = 0x00;
+	DDRC = 0xFF;
+	PORTC = 0x00;
 
-	shifter_74595_conn *shfConn = shf74595_createConnection(&PORTD, 5, &PORTD, 7, &PORTB, 0, &PORTB, 1);
+	shifter_74595_conn *shfConn = shf74595_createConnection(&PORTC, 3, &PORTC, 2, &PORTC, 1, &PORTC, 0);
 	shf74595_initConnection(shfConn);
 
 	hd44780_74595_connection *conn_struct = hd44780_74595_createConnection(shfConn, 0, 5, 4);
