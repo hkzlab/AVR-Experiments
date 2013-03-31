@@ -73,7 +73,11 @@ int main(void) {
 	print_standardClock();
 
 	uint8_t clkCounter = 0;
+	int8_t curKey;
 	while (1) {
+		curKey = pressedKey;
+		pressedKey = -1;
+
 		if (clock_sec) {
 			clock_sec = 0;
 			clkCounter++;
@@ -85,7 +89,7 @@ int main(void) {
 			 print_standardClock();
 		}
 
-		switch (pressedKey) {
+		switch (curKey) {
 			case 11:
 				clock_setup(1);
 				 print_standardClock();
@@ -93,8 +97,6 @@ int main(void) {
 			default:
 				break;
 		}
-
-		if (pressedKey >= 0) pressedKey = -1;
 	}
 
 	return 0;
@@ -126,8 +128,9 @@ void sys_setup(void) {
 	PORTD &= 0x7F;
 
 	// Enable interrupts
-	PCICR |= 1 << PCIE2; // Enable PCINT2 (23..16)
-	PCMSK2 |= 1 << PCINT23;
+	EIMSK |= 1 << INT1;  //Enable INT0
+    EICRA |= (1 << ISC10) | (1 << ISC11); //Trigger on rising edge of INT1
+
 	sei();
 
 	// Init LCD
@@ -154,8 +157,8 @@ void sys_setup(void) {
 	_delay_ms(2000);
 
 	// Check the clock
-	DDRD &= 0xBF; // Set pin 6 of Port D as input. Will be used as interrupt
-	PORTD &= 0xBF;
+	DDRD &= 0xFB; // Set pin 2 of Port D as input. Will be used as interrupt
+	PORTD &= 0xFB;
 
 	fprintf(stdout, "Checking DS1307 status...\n");
 	uint16_t ds_chkval;
@@ -170,10 +173,14 @@ void sys_setup(void) {
 		fprintf(stdout, "Clock check passed!!!\n");
 	}
 	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);
-	PCMSK2 |= 1 << PCINT22;
 
+	EIMSK |= 1 << INT0;  //Enable INT0
+    EICRA |= 1 << (1 << ISC00) | (1 << ISC01); //Trigger on rising edge of INT0
 
 	hd44780_hl_clear(lcdDriver);
+
+	// Prepare sleep mode
+//	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 }
 
 int clock_checkAndSet(int8_t *data) {
@@ -213,7 +220,7 @@ void clock_setup(uint8_t backEnabled) {
 	hd44780_hl_printText(lcdDriver, 0, 0, "Config. orario:\nDD/MM/20YY     hh:mm");
 
 	if (backEnabled)
-		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#    \x06\NO  \x07OK    *\x7E");
+		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#    \x06NO  \x07OK    *\x7E");
 	else
 		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#      \x07OK       *\x7E");		
 
@@ -221,8 +228,13 @@ void clock_setup(uint8_t backEnabled) {
 	hd44780_hl_setCursor(lcdDriver, 1, 1);	
 
 	uint8_t looping = 1;
+	int8_t curKey = -1;
+
 	while (looping) {
-		switch (pressedKey) {
+		curKey = pressedKey;
+		pressedKey = -1;
+
+		switch (curKey) {
 			case -1:
 				continue;
 			case 11:
@@ -239,8 +251,8 @@ void clock_setup(uint8_t backEnabled) {
 			case 9:
 			case 10:
 			case 13:
-				hd44780_hl_printCharAtCurrentPosition(lcdDriver, key_table[pressedKey]);
-				timeData[cur_pos] = key_table[pressedKey] - 0x30;
+				hd44780_hl_printCharAtCurrentPosition(lcdDriver, key_table[curKey]);
+				timeData[cur_pos] = key_table[curKey] - 0x30;
 
 				cur_pos = (cur_pos + 1) % sizeof(skip_table);
 				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);		
@@ -264,8 +276,6 @@ void clock_setup(uint8_t backEnabled) {
 			default:
 				break;
 		}
-
-		if (pressedKey >= 0) pressedKey = -1;
 	}
 
 	hd44780_hl_clear(lcdDriver);	
@@ -273,24 +283,12 @@ void clock_setup(uint8_t backEnabled) {
 }
 
 // INTERRUPTS
-ISR(PCINT2_vect) { // PCINT 23..16
-	static uint8_t oldPinD = 0x00;
-
-	// Check for key
-	if ((oldPinD & 0x80) != (PIND & 0x80)) { // Key encoder interrupt
-		if (PIND & 0x80)
-			pressedKey = PINB & 0xF;
-		else
-			pressedKey = -1;
-	}
-
-	// Check for clock
-	if ((oldPinD & 0x40) != (PIND & 0x40)) { // DS1307 interrupt
-		if (PIND & 0x40)
-			clock_sec = 1;
-		else
-			clock_sec = 0;
-	}
-
-	oldPinD = PIND;	
+ISR(INT0_vect) {
+	clock_sec = 1;
 }
+
+ISR(INT1_vect) {
+	pressedKey = PINB & 0xF;
+}
+
+
