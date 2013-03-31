@@ -218,6 +218,9 @@ int clock_checkAndSet(int8_t *data) {
 	time.year = data[4] * 10 + data[5] + 2000;
 
 	time.dayOfWeek = dayOfWeek(time.dayOfMonth, time.month, time.year);
+	time.day12 = 0;
+
+	fprintf(stdout, "Setting time:\n time.minutes = %.2d\n time.hours = %.2d\n time.dayOfMonth = %.2d\n time.month = %.2d\n time.year = %.4d\n time.dayOfWeek = %.2d\n", time.minutes, time.hours, time.dayOfMonth, time.month, time.year, time.dayOfWeek);
 
 	DS1307_writeToD(&time);
 	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);
