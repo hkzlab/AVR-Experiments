@@ -1,6 +1,9 @@
 #include <stdint.h>
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
+
 #include <stdio.h>
 #include <util/delay.h>
 
@@ -97,6 +100,13 @@ int main(void) {
 			default:
 				break;
 		}
+
+		// Sleep time...
+		cli();
+		sleep_bod_disable();
+		sei();
+		sleep_cpu();
+		sleep_disable();
 	}
 
 	return 0;
@@ -153,8 +163,6 @@ void sys_setup(void) {
 
 	// Print first line
 	hd44780_hl_clear(lcdDriver);
-	hd44780_hl_printText(lcdDriver, 0, 0, "Base Sensori\nAttendere...");
-	_delay_ms(2000);
 
 	// Check the clock
 	DDRD &= 0xFB; // Set pin 2 of Port D as input. Will be used as interrupt
@@ -164,6 +172,8 @@ void sys_setup(void) {
 	uint16_t ds_chkval;
 	DS1307_readSRAM((uint8_t *)&ds_chkval, 2);
 	if (ds_chkval != SRAM_CHKVAL) { // The clock lost power!
+		fprintf(stdout, "Clock needs configuration!!!\n");
+		
 		ds_chkval = SRAM_CHKVAL;
 
 		clock_setup(0);
@@ -180,7 +190,9 @@ void sys_setup(void) {
 	hd44780_hl_clear(lcdDriver);
 
 	// Prepare sleep mode
-//	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+
+	fprintf(stdout, "Starting up.\n");	
 }
 
 int clock_checkAndSet(int8_t *data) {
@@ -284,10 +296,12 @@ void clock_setup(uint8_t backEnabled) {
 
 // INTERRUPTS
 ISR(INT0_vect) {
+	sleep_disable();
 	clock_sec = 1;
 }
 
 ISR(INT1_vect) {
+	sleep_disable();
 	pressedKey = PINB & 0xF;
 }
 
