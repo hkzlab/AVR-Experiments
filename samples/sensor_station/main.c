@@ -78,8 +78,6 @@ int main(void) {
 	uint8_t clkCounter = 0;
 	int8_t curKey;
 	while (1) {
-		curKey = pressedKey;
-		pressedKey = -1;
 
 		if (clock_sec) {
 			clock_sec = 0;
@@ -88,17 +86,22 @@ int main(void) {
 
 		if (!(clkCounter % 30)) {
 			clkCounter = 0;
-		
-			 print_standardClock();
+
+			print_standardClock();
 		}
 
-		switch (curKey) {
+		if (pressedKey >= 0) {
+			curKey = pressedKey;
+			pressedKey = -1;
+
+			switch (curKey) {
 			case 11:
 				clock_setup(1);
-				 print_standardClock();
+				print_standardClock();
 				break;
 			default:
 				break;
+			}
 		}
 
 		// Sleep time...
@@ -113,8 +116,8 @@ int main(void) {
 }
 
 void print_standardClock(void) {
-	char timeStrBuffer[21];	
-	DS1307_ToD time;	
+	char timeStrBuffer[21];
+	DS1307_ToD time;
 
 	DS1307_readToD(&time);
 	sprintf(timeStrBuffer, "%.2u/%.2u/%.4u   %.2u:%.2u \x06", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
@@ -139,7 +142,7 @@ void sys_setup(void) {
 
 	// Enable interrupts
 	EIMSK |= 1 << INT1;  //Enable INT0
-    EICRA |= (1 << ISC10) | (1 << ISC11); //Trigger on rising edge of INT1
+	EICRA |= (1 << ISC10) | (1 << ISC11); //Trigger on rising edge of INT1
 
 	sei();
 
@@ -173,7 +176,7 @@ void sys_setup(void) {
 	DS1307_readSRAM((uint8_t *)&ds_chkval, 2);
 	if (ds_chkval != SRAM_CHKVAL) { // The clock lost power!
 		fprintf(stdout, "Clock needs configuration!!!\n");
-		
+
 		ds_chkval = SRAM_CHKVAL;
 
 		clock_setup(0);
@@ -185,14 +188,14 @@ void sys_setup(void) {
 	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);
 
 	EIMSK |= 1 << INT0;  //Enable INT0
-    EICRA |= 1 << (1 << ISC00) | (1 << ISC01); //Trigger on rising edge of INT0
+	EICRA |= 1 << (1 << ISC00) | (1 << ISC01); //Trigger on rising edge of INT0
 
 	hd44780_hl_clear(lcdDriver);
 
 	// Prepare sleep mode
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
-	fprintf(stdout, "Starting up.\n");	
+	fprintf(stdout, "Starting up.\n");
 }
 
 int clock_checkAndSet(int8_t *data) {
@@ -217,7 +220,7 @@ int clock_checkAndSet(int8_t *data) {
 	time.dayOfWeek = dayOfWeek(time.dayOfMonth, time.month, time.year);
 
 	DS1307_writeToD(&time);
-	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);	
+	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);
 
 	return 1;
 }
@@ -225,7 +228,7 @@ int clock_checkAndSet(int8_t *data) {
 void clock_setup(uint8_t backEnabled) {
 	uint8_t key_table[] = {0x31, 0x32, 0x33, 0x04, 0x34, 0x35, 0x36, 0x05, 0x37, 0x38, 0x39, 0x06, 0x23, 0x30, 0x2a, 0x07};
 	uint8_t skip_table[] = {0, 1, 3, 4, 8, 9, 15, 16, 18, 19};
-	int8_t timeData[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+	int8_t timeData[10] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 	uint8_t cur_pos = 0;
 
 	hd44780_hl_clear(lcdDriver);
@@ -234,19 +237,21 @@ void clock_setup(uint8_t backEnabled) {
 	if (backEnabled)
 		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#    \x06NO  \x07OK    *\x7E");
 	else
-		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#      \x07OK       *\x7E");		
+		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#      \x07OK       *\x7E");
 
 	hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);
-	hd44780_hl_setCursor(lcdDriver, 1, 1);	
+	hd44780_hl_setCursor(lcdDriver, 1, 1);
 
 	uint8_t looping = 1;
 	int8_t curKey = -1;
 
 	while (looping) {
-		curKey = pressedKey;
-		pressedKey = -1;
 
-		switch (curKey) {
+		if (pressedKey >= 0) {
+			curKey = pressedKey;
+			pressedKey = -1;
+
+			switch (curKey) {
 			case -1:
 				continue;
 			case 11:
@@ -267,31 +272,32 @@ void clock_setup(uint8_t backEnabled) {
 				timeData[cur_pos] = key_table[curKey] - 0x30;
 
 				cur_pos = (cur_pos + 1) % sizeof(skip_table);
-				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);		
+				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);
 				break;
 			case 12: // Left
 				cur_pos = (((cur_pos - 1) < 0) ? (sizeof(skip_table) - 1) : (cur_pos - 1));
-				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);				
+				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);
 				break;
 			case 14: // Right
 				cur_pos = (cur_pos + 1) % sizeof(skip_table);
-				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);		
+				hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);
 				break;
 			case 15: // Enter
 				if (clock_checkAndSet(timeData)) {
 					looping = 0;
 				} else {
 					hd44780_hl_printText(lcdDriver, 2, 0, "    ** ERRORE **");
-					hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);							
+					hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);
 				}
 				break;
 			default:
 				break;
+			}
 		}
 	}
 
-	hd44780_hl_clear(lcdDriver);	
-	hd44780_hl_setCursor(lcdDriver, 0, 0);		
+	hd44780_hl_clear(lcdDriver);
+	hd44780_hl_setCursor(lcdDriver, 0, 0);
 }
 
 // INTERRUPTS
