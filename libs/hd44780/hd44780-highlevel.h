@@ -24,4 +24,8 @@ void hd44780_hl_shiftCursor(hd44780_driver *driver, uint8_t direction); // direc
 void hd44780_hl_setCustomFont(hd44780_driver *driver, uint8_t slot, uint8_t *data);
 void hd44780_hl_clear(hd44780_driver *driver);
 
+void hd44780_hl_printCharAtCurrentPosition(hd44780_driver *driver, char c);
+void hd44780_hl_moveCursor(hd44780_driver *driver, uint8_t line, uint8_t position);
+void hd44780_hl_setCursor(hd44780_driver *driver, uint8_t blink_cursor, uint8_t show_cursor);
+
 #endif /* _HD44780_HIGHLEVEL_ */

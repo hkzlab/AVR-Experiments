@@ -52,6 +52,11 @@ void hd44780_hl_init(hd44780_driver *driver, uint8_t show_cursor, uint8_t blink_
 	driver->sendCommand(driver->conn_struct, hd44780_DisplayControl(1, show_cursor ? 1 : 0, blink_cursor ? 1 : 0));
 } 
 
+void hd44780_hl_setCursor(hd44780_driver *driver, uint8_t blink_cursor, uint8_t show_cursor) {
+	// Enable display and blinking
+	driver->sendCommand(driver->conn_struct, hd44780_DisplayControl(1, show_cursor ? 1 : 0, blink_cursor ? 1 : 0));
+}
+
 void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position, char *text) {
 	if (!driver) return;
 	uint8_t char_address = 0;
@@ -141,8 +146,9 @@ void hd44780_hl_printText(hd44780_driver *driver, uint8_t line, uint8_t position
 	}
 }
 
-void hd44780_hl_printChar(hd44780_driver *driver, uint8_t line, uint8_t position, char c) {
+void hd44780_hl_moveCursor(hd44780_driver *driver, uint8_t line, uint8_t position) {
 	if (!driver) return;
+
 	uint8_t char_address = 0;
 
 	switch (driver->type) {
@@ -177,9 +183,16 @@ void hd44780_hl_printChar(hd44780_driver *driver, uint8_t line, uint8_t position
 
 	// Move to position
 	driver->sendCommand(driver->conn_struct, hd44780_SetDDRAMAddr(char_address));
+}
 
+void hd44780_hl_printCharAtCurrentPosition(hd44780_driver *driver, char c) {
 	// Print char
 	driver->sendCommand(driver->conn_struct, hd44780_WriteData(c));
+}
+
+void hd44780_hl_printChar(hd44780_driver *driver, uint8_t line, uint8_t position, char c) {
+	hd44780_hl_moveCursor(driver, line, position);
+	hd44780_hl_printCharAtCurrentPosition(driver, c);
 }
 
 void hd44780_hl_shiftDisplay(hd44780_driver *driver, uint8_t direction) {
