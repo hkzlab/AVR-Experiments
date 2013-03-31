@@ -65,16 +65,12 @@ static uint8_t lcd_graphics[4][8] = {{
 void sys_setup(void);
 void clock_setup(uint8_t backEnabled);
 int clock_checkAndSet(int8_t *data);
+void print_standardClock(void);
 
 int main(void) {
-	char timeStrBuffer[21];
-
 	sys_setup();
 
-	DS1307_ToD time;
-	DS1307_readToD(&time);
-	sprintf(timeStrBuffer, "%.2u/%.2u/%.4u     %.2u:%.2u", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
-	hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
+	print_standardClock();
 
 	uint8_t clkCounter = 0;
 	while (1) {
@@ -86,19 +82,13 @@ int main(void) {
 		if (!(clkCounter % 30)) {
 			clkCounter = 0;
 		
-			DS1307_readToD(&time);
-			sprintf(timeStrBuffer, "%.2u/%.2u/%.4u     %.2u:%.2u", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
-			hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
+			 print_standardClock();
 		}
 
 		switch (pressedKey) {
-			case 3:
+			case 11:
 				clock_setup(1);
-
-				DS1307_readToD(&time);
-				sprintf(timeStrBuffer, "%.2u/%.2u/%.4u     %.2u:%.2u", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
-				hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
-
+				 print_standardClock();
 				break;
 			default:
 				break;
@@ -108,6 +98,15 @@ int main(void) {
 	}
 
 	return 0;
+}
+
+void print_standardClock(void) {
+	char timeStrBuffer[21];	
+	DS1307_ToD time;	
+
+	DS1307_readToD(&time);
+	sprintf(timeStrBuffer, "%.2u/%.2u/%.4u   %.2u:%.2u \x06", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
+	hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
 }
 
 void sys_setup(void) {
@@ -214,7 +213,7 @@ void clock_setup(uint8_t backEnabled) {
 	hd44780_hl_printText(lcdDriver, 0, 0, "Config. orario:\nDD/MM/20YY     hh:mm");
 
 	if (backEnabled)
-		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#    \x04\NO  \x07OK    *\x7E");
+		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#    \x06\NO  \x07OK    *\x7E");
 	else
 		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#      \x07OK       *\x7E");		
 
@@ -226,7 +225,7 @@ void clock_setup(uint8_t backEnabled) {
 		switch (pressedKey) {
 			case -1:
 				continue;
-			case 3:
+			case 11:
 				if (backEnabled)
 					looping = 0;
 				break;
