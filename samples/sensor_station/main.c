@@ -69,6 +69,7 @@ void sys_setup(void);
 void clock_setup(uint8_t backEnabled);
 int clock_checkAndSet(int8_t *data);
 void print_standardClock(void);
+void send_to_sleep(void);
 
 int main(void) {
 	sys_setup();
@@ -78,7 +79,6 @@ int main(void) {
 	uint8_t clkCounter = 0;
 	int8_t curKey;
 	while (1) {
-
 		if (clock_sec) {
 			clock_sec = 0;
 			clkCounter++;
@@ -104,15 +104,21 @@ int main(void) {
 			}
 		}
 
-		// Sleep time...
-		cli();
-		sleep_bod_disable();
-		sei();
-		sleep_cpu();
-		sleep_disable();
+		// Sleep time...		
+		send_to_sleep();
 	}
 
 	return 0;
+}
+
+void send_to_sleep(void) {
+	sleep_enable();		
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);		
+	cli();
+	sleep_bod_disable();
+	sei();
+	sleep_cpu();
+	sleep_disable();
 }
 
 void print_standardClock(void) {
@@ -191,9 +197,6 @@ void sys_setup(void) {
 	EICRA |= 1 << (1 << ISC00) | (1 << ISC01); //Trigger on rising edge of INT0
 
 	hd44780_hl_clear(lcdDriver);
-
-	// Prepare sleep mode
-	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
 	fprintf(stdout, "Starting up.\n");
 }
