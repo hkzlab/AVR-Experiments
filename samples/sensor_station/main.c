@@ -63,7 +63,7 @@ static uint8_t lcd_graphics[4][8] = {{
 };
 
 void sys_setup(void);
-void clock_setup(void);
+void clock_setup(uint8_t backEnabled);
 int clock_checkAndSet(int8_t *data);
 
 int main(void) {
@@ -90,6 +90,21 @@ int main(void) {
 			sprintf(timeStrBuffer, "%.2u/%.2u/%.4u     %.2u:%.2u", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
 			hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
 		}
+
+		switch (pressedKey) {
+			case 3:
+				clock_setup(1);
+
+				DS1307_readToD(&time);
+				sprintf(timeStrBuffer, "%.2u/%.2u/%.4u     %.2u:%.2u", time.dayOfMonth, time.month, time.year, time.hours, time.minutes);
+				hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
+
+				break;
+			default:
+				break;
+		}
+
+		if (pressedKey >= 0) pressedKey = -1;
 	}
 
 	return 0;
@@ -149,7 +164,7 @@ void sys_setup(void) {
 	if (ds_chkval != SRAM_CHKVAL) { // The clock lost power!
 		ds_chkval = SRAM_CHKVAL;
 
-		clock_setup();
+		clock_setup(0);
 
 		DS1307_writeSRAM((uint8_t *)&ds_chkval, 2); // Mark clock SRAM
 	} else { // Clock is fine
@@ -165,37 +180,43 @@ void sys_setup(void) {
 int clock_checkAndSet(int8_t *data) {
 	DS1307_ToD time;
 
-	for (uint8_t counter = 0; counter < 11; counter++) {
+	for (uint8_t counter = 0; counter < 10; counter++) {
 		if (data[counter] < 0) return 0;
 	}
 
 	time.seconds = 0;
-	time.minutes = data[9] * 10 + data[10];
+	time.minutes = data[8] * 10 + data[9];
 	if (time.minutes > 59) return 0;
-	time.hours = data[7] * 10 + data[8];
+	time.hours = data[6] * 10 + data[7];
 	if (time.hours > 23) return 0;
 
 	time.dayOfMonth = data[0] * 10 + data[1];
 	if (time.dayOfMonth > 31) return 0;
 	time.month = data[2] * 10 + data[3];
 	if (time.month > 12) return 0;
-	time.year = data[4] * 100 + data[5] * 10 + data[6] + 2000;
+	time.year = data[4] * 10 + data[5] + 2000;
 
 	time.dayOfWeek = dayOfWeek(time.dayOfMonth, time.month, time.year);
 
 	DS1307_writeToD(&time);
+	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);	
 
 	return 1;
 }
 
-void clock_setup(void) {
+void clock_setup(uint8_t backEnabled) {
 	uint8_t key_table[] = {0x31, 0x32, 0x33, 0x04, 0x34, 0x35, 0x36, 0x05, 0x37, 0x38, 0x39, 0x06, 0x23, 0x30, 0x2a, 0x07};
-	uint8_t skip_table[] = {0, 1, 3, 4, 7, 8, 9, 15, 16, 18, 19};
-	int8_t timeData[11] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+	uint8_t skip_table[] = {0, 1, 3, 4, 8, 9, 15, 16, 18, 19};
+	int8_t timeData[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 	uint8_t cur_pos = 0;
 
 	hd44780_hl_clear(lcdDriver);
-	hd44780_hl_printText(lcdDriver, 0, 0, "Config. orario:\nDD/MM/2YYY     hh:mm\n\n\x7F#      \x07 OK      *\x7E");
+	hd44780_hl_printText(lcdDriver, 0, 0, "Config. orario:\nDD/MM/20YY     hh:mm");
+
+	if (backEnabled)
+		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#    \x04\NO  \x07OK    *\x7E");
+	else
+		hd44780_hl_printText(lcdDriver, 3, 0, "\x7F#      \x07OK       *\x7E");		
 
 	hd44780_hl_moveCursor(lcdDriver, 1, skip_table[cur_pos]);
 	hd44780_hl_setCursor(lcdDriver, 1, 1);	
@@ -205,6 +226,10 @@ void clock_setup(void) {
 		switch (pressedKey) {
 			case -1:
 				continue;
+			case 3:
+				if (backEnabled)
+					looping = 0;
+				break;
 			case 0:
 			case 1:
 			case 2:
@@ -244,6 +269,7 @@ void clock_setup(void) {
 		if (pressedKey >= 0) pressedKey = -1;
 	}
 
+	hd44780_hl_clear(lcdDriver);	
 	hd44780_hl_setCursor(lcdDriver, 0, 0);		
 }
 
