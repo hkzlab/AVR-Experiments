@@ -82,6 +82,8 @@ int main(void) {
 		if (clock_sec) {
 			clock_sec = 0;
 			clkCounter++;
+
+			 hd44780_hl_printChar(lcdDriver, 0, 15, clkCounter % 2 ? ':' : ' ');
 		}
 
 		if (!(clkCounter % 30)) {
