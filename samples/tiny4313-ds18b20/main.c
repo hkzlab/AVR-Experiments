@@ -5,7 +5,7 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-#include "ds18b20.h"
+#include "owilib.h"
 
 #include "uart.h"
 #include "main.h"
@@ -21,7 +21,7 @@ int main(void) {
 	DDRB = 0xFF;
 	PORTB = 0x00;
 
-	ds18b20_conn dsconn;
+	owi_conn dsconn;
 
 	dsconn.port = &PORTB;
 	dsconn.pin = &PINB;
@@ -32,10 +32,10 @@ int main(void) {
 
 	uint8_t buffer[16];
 
-	ds18b20_reset(&dsconn);
+	owi_reset(&dsconn);
 
 	while (1) {
-		ds18b20_readROM(&dsconn, buffer);
+		owi_readROM(&dsconn, buffer);
 		fprintf(stdout, "val %.02X %.02X %.02X %.02X %.02X %.02X %.02X %.02X\n",  buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
 		_delay_ms(1000);
 	}
