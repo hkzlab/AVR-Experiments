@@ -31,13 +31,15 @@ int main(void) {
 	fprintf(stdout, "AVVIO\n");
 
 	uint8_t buffer[16];
+	uint8_t count;
 
 	owi_reset(&dsconn);
 
+	owi_searchROM(&dsconn, buffer, &count);
+
 	while (1) {
-		owi_readROM(&dsconn, buffer);
-		fprintf(stdout, "val %.02X %.02X %.02X %.02X %.02X %.02X %.02X %.02X\n",  buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
 		_delay_ms(1000);
+		fprintf(stdout, "LOOP! %d %.2X %.2X\n", count, buffer[0], buffer[1]);
 	}
 
     return 0;

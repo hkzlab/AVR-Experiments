@@ -1,4 +1,7 @@
 #include "owilib.h"
+#include "stdio.h"
+
+#include <stdio.h>
 
 #include <util/delay.h>
 
@@ -11,24 +14,20 @@
 #define OWI_READ(conn) (*(conn->pin) & (1 << conn->pinNum))
 
 typedef enum {
-	OWI_CONVERTTEMP = 0x44,
-	OWI_RSCRATCHPAD = 0xBE,
-	OWI_WSCRATCHPAD = 0x4E,
-	OWI_CPYSCRATCHPAD = 0x48,
-	OWI_RECEEPROM = 0xB8,
-	OWI_RPWRSUPPLY = 0xB4,
-	OWI_SEARCHROM = 0xF0,
-	OWI_READROM = 0x33,
-	OWI_MATCHROM = 0x55,
-	OWI_SKIPROM = 0xCC,
-	OWI_ALARMSEARCH = 0xEC
+    OWI_RSCRATCHPAD = 0xBE,
+    OWI_WSCRATCHPAD = 0x4E,
+    OWI_CPYSCRATCHPAD = 0x48,
+    OWI_RECEEPROM = 0xB8,
+    OWI_RPWRSUPPLY = 0xB4,
+    OWI_SEARCHROM = 0xF0,
+    OWI_READROM = 0x33,
+    OWI_MATCHROM = 0x55,
+    OWI_SKIPROM = 0xCC,
+    OWI_ALARMSEARCH = 0xEC
 } ds_op;
 
 uint8_t owi_internal_readBit(owi_conn *conn);
 void owi_internal_writeBit(owi_conn *conn, uint8_t bit);
-
-uint8_t owi_internal_readByte(owi_conn *conn);
-void owi_internal_writeByte(owi_conn *conn, uint8_t data);
 
 uint8_t owi_reset(owi_conn *conn) {
 	uint8_t val = 0xFF;
@@ -51,12 +50,130 @@ uint8_t owi_reset(owi_conn *conn) {
 
 void owi_readROM(owi_conn *conn, uint8_t buf[8]) {
 	owi_reset(conn);
-	owi_internal_writeByte(conn, OWI_READROM);
+	owi_writeByte(conn, OWI_READROM);
 
 	for (uint8_t counter = 0; counter < 8; counter++)
-		buf[counter] = owi_internal_readByte(conn);
+		buf[counter] = owi_readByte(conn);
 
 	owi_reset(conn);
+}
+
+void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
+	uint8_t discrepancy = 0, lastDiscrepancy = 0;
+	uint8_t romBitIdx;
+	uint8_t done = 0;
+
+	uint8_t presence = !owi_reset(conn);
+	if (!presence) {
+		*count = 0;
+
+		return;
+	}
+
+	*count = 0;
+
+	
+	uint8_t anotherROMAvailable = 1;
+	do {
+		
+		anotherROMAvailable = 0;
+
+		while (!done) {
+			presence = !owi_reset(conn);
+			if (!presence) {
+				lastDiscrepancy = 0;
+				continue;
+			}
+
+			romBitIdx = 1;
+			discrepancy = 0;
+
+			owi_writeByte(conn, OWI_SEARCHROM);
+
+			while (1) {
+				uint8_t bitA = owi_internal_readBit(conn);
+				uint8_t bitB = owi_internal_readBit(conn);
+
+				if (bitB && bitA) {
+					lastDiscrepancy = 0;
+					break;
+				}
+
+				if (!bitB && !bitA) {
+					if (romBitIdx == lastDiscrepancy) {
+						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] |= (1 << ((romBitIdx - 1) % 8));
+						// SET ROM[romBitIdx - 1] = 1						
+						
+						owi_internal_writeBit(conn, 1);
+						romBitIdx++;
+
+						if (romBitIdx > 64) {
+							lastDiscrepancy = discrepancy;
+							if (!lastDiscrepancy) done = 1;
+							anotherROMAvailable = 1;							
+							break;
+						} else {
+							continue;
+						}
+					} else if (romBitIdx > lastDiscrepancy) {
+						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] &= ~(1 << ((romBitIdx - 1) % 8));
+						// SET ROM[romBitIdx - 1] = 0
+
+						discrepancy = romBitIdx;
+						owi_internal_writeBit(conn, 0);
+						romBitIdx++;
+
+						if (romBitIdx > 64) {
+							lastDiscrepancy = discrepancy;
+							if (!lastDiscrepancy) done = 1;
+							anotherROMAvailable = 1;							
+							break;
+						} else {
+							continue;
+						}
+					} else {
+						uint8_t curRomBit = (buf[((romBitIdx - 1) / 8) + ((*count) * 8)] >> ((romBitIdx - 1) % 8)) & 1; // ROM[romBitIdx - 1]
+
+						if (!curRomBit)
+							discrepancy = romBitIdx;
+
+						owi_internal_writeBit(conn, curRomBit);
+						romBitIdx++;
+
+						if (romBitIdx > 64) {
+							lastDiscrepancy = discrepancy;
+							if (!lastDiscrepancy) done = 1;
+							anotherROMAvailable = 1;
+							break;
+						} else {
+							continue;
+						}
+					}
+				} else {
+					if (bitA)
+						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] |= (1 << ((romBitIdx - 1) % 8));
+					else
+						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] &= ~(1 << ((romBitIdx - 1) % 8));
+					// SET ROM[romBitIdx - 1] = bitA
+
+					owi_internal_writeBit(conn, bitA);
+					romBitIdx++;
+
+					if (romBitIdx > 64) {
+						lastDiscrepancy = discrepancy;
+						if (!lastDiscrepancy) done = 1;
+						anotherROMAvailable = 1;						
+						break;
+					} else {
+						continue;
+					}
+				}
+
+			}
+		} 
+
+		*count += 1;
+	} while (anotherROMAvailable);
 }
 
 // *************
@@ -95,7 +212,7 @@ void owi_internal_writeBit(owi_conn *conn, uint8_t bit) {
 	OWI_SET_INPUT(conn);
 }
 
-uint8_t owi_internal_readByte(owi_conn *conn) {
+uint8_t owi_readByte(owi_conn *conn) {
 	uint8_t byte = 0;
 
 	for (uint8_t counter = 0; counter < 8; counter++) {
@@ -106,7 +223,7 @@ uint8_t owi_internal_readByte(owi_conn *conn) {
 	return byte;
 }
 
-void owi_internal_writeByte(owi_conn *conn, uint8_t data) {
+void owi_writeByte(owi_conn *conn, uint8_t data) {
 	for (uint8_t counter = 0; counter < 8; counter++) {
 		owi_internal_writeBit(conn, data & 1);
 		data >>= 1;
