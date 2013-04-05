@@ -191,6 +191,26 @@ void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
 	} while (anotherROMAvailable);
 }
 
+uint8_t owi_calcCRC(uint8_t *data, uint16_t len) {
+	uint8_t CRC = 0;
+
+	for (uint16_t idx = 0; idx < len; idx++) {
+		uint8_t tmp, sr_lsb, fb_bit, tmpData;
+		tmpData = data[idx];
+		
+		for (uint8_t cnt = 0; cnt < 8; cnt++) {
+			tmp = (tmpData >> cnt) & 0x01;	
+			sr_lsb = CRC & 0x01;
+			fb_bit = (tmp ^ sr_lsb) & 0x01;
+			CRC >>= 1;
+			if (fb_bit)
+				CRC ^= 0x8C;
+		}
+	}
+
+	return CRC;
+}
+
 // *************
 
 uint8_t owi_internal_readBit(owi_conn *conn) {

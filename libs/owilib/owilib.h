@@ -16,6 +16,7 @@ void owi_writeByte(owi_conn *conn, uint8_t data);
 uint8_t owi_reset(owi_conn *conn);
 void owi_readROM(owi_conn *conn, uint8_t buf[8]);
 void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count);
+uint8_t owi_calcCRC(uint8_t *data, uint16_t len);
 
 
 #endif /* _OWILIB_HEADER_ */
