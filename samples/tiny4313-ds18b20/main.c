@@ -39,7 +39,7 @@ int main(void) {
 
 	while (1) {
 		_delay_ms(1000);
-		fprintf(stdout, "LOOP! %d %.2X %.2X\n", count, buffer[0], buffer[1]);
+		fprintf(stdout, "LOOP! %d\n%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n\n", count, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15]);
 	}
 
     return 0;

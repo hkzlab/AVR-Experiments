@@ -59,9 +59,13 @@ void owi_readROM(owi_conn *conn, uint8_t buf[8]) {
 }
 
 void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
+	uint8_t temp_address[8];
+
 	uint8_t discrepancy = 0, lastDiscrepancy = 0;
 	uint8_t romBitIdx;
 	uint8_t done = 0;
+
+	uint8_t bitA, bitB;
 
 	uint8_t presence = !owi_reset(conn);
 	if (!presence) {
@@ -72,107 +76,118 @@ void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
 
 	*count = 0;
 
-	
-	uint8_t anotherROMAvailable = 1;
+
+	uint8_t anotherROMAvailable;
 	do {
-		
+		for (uint8_t idx = 0; idx < 8; idx++) {
+			temp_address[idx] = 0;
+		}
+
 		anotherROMAvailable = 0;
 
-		while (!done) {
-			presence = !owi_reset(conn);
-			if (!presence) {
+		if (done) {
+			done = 0;
+			continue;
+		}
+
+		presence = !owi_reset(conn);
+		if (!presence) {
+			lastDiscrepancy = 0;
+			continue;
+		}
+
+		romBitIdx = 1;
+		discrepancy = 0;
+
+		owi_writeByte(conn, OWI_SEARCHROM);
+
+		while (1) {
+			bitA = owi_internal_readBit(conn);
+			bitB = owi_internal_readBit(conn);
+
+			if (bitB && bitA) {
 				lastDiscrepancy = 0;
-				continue;
+				break;
 			}
 
-			romBitIdx = 1;
-			discrepancy = 0;
+			if (!bitB && !bitA) {
+				if (romBitIdx == lastDiscrepancy) {
+					temp_address[((romBitIdx - 1) / 8)] |= (1 << ((romBitIdx - 1) % 8));
 
-			owi_writeByte(conn, OWI_SEARCHROM);
-
-			while (1) {
-				uint8_t bitA = owi_internal_readBit(conn);
-				uint8_t bitB = owi_internal_readBit(conn);
-
-				if (bitB && bitA) {
-					lastDiscrepancy = 0;
-					break;
-				}
-
-				if (!bitB && !bitA) {
-					if (romBitIdx == lastDiscrepancy) {
-						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] |= (1 << ((romBitIdx - 1) % 8));
-						// SET ROM[romBitIdx - 1] = 1						
-						
-						owi_internal_writeBit(conn, 1);
-						romBitIdx++;
-
-						if (romBitIdx > 64) {
-							lastDiscrepancy = discrepancy;
-							if (!lastDiscrepancy) done = 1;
-							anotherROMAvailable = 1;							
-							break;
-						} else {
-							continue;
-						}
-					} else if (romBitIdx > lastDiscrepancy) {
-						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] &= ~(1 << ((romBitIdx - 1) % 8));
-						// SET ROM[romBitIdx - 1] = 0
-
-						discrepancy = romBitIdx;
-						owi_internal_writeBit(conn, 0);
-						romBitIdx++;
-
-						if (romBitIdx > 64) {
-							lastDiscrepancy = discrepancy;
-							if (!lastDiscrepancy) done = 1;
-							anotherROMAvailable = 1;							
-							break;
-						} else {
-							continue;
-						}
-					} else {
-						uint8_t curRomBit = (buf[((romBitIdx - 1) / 8) + ((*count) * 8)] >> ((romBitIdx - 1) % 8)) & 1; // ROM[romBitIdx - 1]
-
-						if (!curRomBit)
-							discrepancy = romBitIdx;
-
-						owi_internal_writeBit(conn, curRomBit);
-						romBitIdx++;
-
-						if (romBitIdx > 64) {
-							lastDiscrepancy = discrepancy;
-							if (!lastDiscrepancy) done = 1;
-							anotherROMAvailable = 1;
-							break;
-						} else {
-							continue;
-						}
-					}
-				} else {
-					if (bitA)
-						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] |= (1 << ((romBitIdx - 1) % 8));
-					else
-						buf[((romBitIdx - 1) / 8) + ((*count) * 8)] &= ~(1 << ((romBitIdx - 1) % 8));
-					// SET ROM[romBitIdx - 1] = bitA
-
-					owi_internal_writeBit(conn, bitA);
+					owi_internal_writeBit(conn, 1);
 					romBitIdx++;
 
 					if (romBitIdx > 64) {
 						lastDiscrepancy = discrepancy;
 						if (!lastDiscrepancy) done = 1;
-						anotherROMAvailable = 1;						
+						anotherROMAvailable = 1;
+						break;
+					} else {
+						continue;
+					}
+				} else if (romBitIdx > lastDiscrepancy) {
+					temp_address[((romBitIdx - 1) / 8)] &= ~(1 << ((romBitIdx - 1) % 8));
+
+					discrepancy = romBitIdx;
+					owi_internal_writeBit(conn, 0);
+					romBitIdx++;
+
+					if (romBitIdx > 64) {
+						lastDiscrepancy = discrepancy;
+						if (!lastDiscrepancy) done = 1;
+						anotherROMAvailable = 1;
+						break;
+					} else {
+						continue;
+					}
+				} else {
+					uint8_t curRomBit = (temp_address[((romBitIdx - 1) / 8)] >> ((romBitIdx - 1) % 8)) & 1;
+
+					if (!curRomBit)
+						discrepancy = romBitIdx;
+
+					owi_internal_writeBit(conn, curRomBit);
+					romBitIdx++;
+
+					if (romBitIdx > 64) {
+						lastDiscrepancy = discrepancy;
+						if (!lastDiscrepancy) done = 1;
+						anotherROMAvailable = 1;
 						break;
 					} else {
 						continue;
 					}
 				}
+			} else {
+				if (bitA)
+					temp_address[((romBitIdx - 1) / 8)] |= (1 << ((romBitIdx - 1) % 8));
+				else
+					temp_address[((romBitIdx - 1) / 8)] &= ~(1 << ((romBitIdx - 1) % 8));
 
+				owi_internal_writeBit(conn, bitA);
+				romBitIdx++;
+
+				if (romBitIdx > 64) {
+					lastDiscrepancy = discrepancy;
+					if (!lastDiscrepancy) done = 1;
+					anotherROMAvailable = 1;
+					break;
+				} else {
+					continue;
+				}
 			}
-		} 
 
-		*count += 1;
+		}
+
+		if (bitA && bitB) continue;
+
+		if (buf) {
+			for (uint8_t idx = 0; idx < 8; idx++) {
+				buf[idx + (*count) * 8] = temp_address[idx];
+			}
+		}
+		(*count)++;
+
 	} while (anotherROMAvailable);
 }
 
