@@ -19,15 +19,15 @@ int main(void) {
 	stdout = &uart_output;
 	stdin  = &uart_input;
 
-	DDRB = 0xFF;
-	PORTB = 0x00;
+	DDRD = 0xFF;
+	PORTD = 0x00;
 
 	owi_conn dsconn;
 
-	dsconn.port = &PORTB;
-	dsconn.pin = &PINB;
-	dsconn.ddr = &DDRB;
-	dsconn.pinNum = 0;
+	dsconn.port = &PORTD;
+	dsconn.pin = &PIND;
+	dsconn.ddr = &DDRD;
+	dsconn.pinNum = 7;
 
 	fprintf(stdout, "AVVIO\n");
 
@@ -37,11 +37,14 @@ int main(void) {
 	owi_reset(&dsconn);
 	owi_searchROM(&dsconn, buffer, &count, 0);
 
-	ds18b20_cfg cfg;
+	int8_t integ;
+	uint16_t decim;
+
 	while (1) {
-		cfg = ds18b20_getCFG(&dsconn, buffer);
-		fprintf(stdout, "%u %d %d\n", cfg.thrmcfg, cfg.hT, cfg.lT);
-		_delay_ms(1000);
+		ds18b20_startTempConversion(&dsconn, NULL);
+		_delay_ms(1000);		
+		ds18b20_getTemp(&dsconn, buffer, &integ, &decim);
+		fprintf(stdout, "%d.%04u\n", integ, decim);
 	}
 
     return 0;

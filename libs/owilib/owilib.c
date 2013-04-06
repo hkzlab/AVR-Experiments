@@ -102,7 +102,7 @@ void owi_copyScratchpad(owi_conn *conn) {
 	owi_reset(conn);	
 }
 
-void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
+void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count, uint8_t alarm) {
 	uint8_t temp_address[8];
 
 	uint8_t discrepancy = 0, lastDiscrepancy = 0;
@@ -143,7 +143,7 @@ void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
 		romBitIdx = 1;
 		discrepancy = 0;
 
-		owi_writeByte(conn, OWI_SEARCHROM);
+		owi_writeByte(conn, alarm ? OWI_ALARMSEARCH : OWI_SEARCHROM);
 
 		while (1) {
 			bitA = owi_internal_readBit(conn);
