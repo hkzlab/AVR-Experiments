@@ -58,6 +58,50 @@ void owi_readROM(owi_conn *conn, uint8_t buf[8]) {
 	owi_reset(conn);
 }
 
+void owi_matchROM(owi_conn *conn, uint8_t rom[8]) {
+	owi_reset(conn);
+	owi_writeByte(conn, OWI_MATCHROM);
+
+	for (uint8_t counter = 0; counter < 8; counter++)
+		owi_writeByte(conn, rom[counter]);
+
+	// Now only the matching device should answer to commands
+}
+
+void owi_skipROM(owi_conn *conn) {
+	owi_reset(conn);
+	owi_writeByte(conn, OWI_SKIPROM);	
+}
+
+void owi_readScratchpad(owi_conn *conn, uint8_t *buf, uint16_t len) {
+	owi_writeByte(conn, OWI_RSCRATCHPAD);
+
+	uint16_t cnt = 0;
+	while (len--) {
+		buf[cnt] = owi_readByte(conn);
+		cnt++;
+	}
+
+	owi_reset(conn);	
+}
+
+void owi_writeScratchpad(owi_conn *conn, uint8_t *buf, uint16_t len) {
+	owi_writeByte(conn, OWI_WSCRATCHPAD);
+
+	uint16_t cnt = 0;
+	while (len--) {
+		owi_writeByte(conn, buf[cnt]);
+		cnt++;
+	}
+
+	owi_reset(conn);	
+}
+
+void owi_copyScratchpad(owi_conn *conn) {
+	owi_writeByte(conn, OWI_CPYSCRATCHPAD);
+	owi_reset(conn);	
+}
+
 void owi_searchROM(owi_conn *conn, uint8_t *buf, uint8_t *count) {
 	uint8_t temp_address[8];
 

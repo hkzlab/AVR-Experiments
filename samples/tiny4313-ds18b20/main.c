@@ -31,6 +31,7 @@ int main(void) {
 	fprintf(stdout, "AVVIO\n");
 
 	uint8_t buffer[16];
+	uint8_t buf[9];
 	uint8_t count;
 
 	owi_reset(&dsconn);
@@ -38,9 +39,14 @@ int main(void) {
 	owi_searchROM(&dsconn, buffer, &count);
 
 	while (1) {
+		owi_skipROM(&dsconn);
+		owi_writeByte(&dsconn, 0x44);
 		_delay_ms(1000);
-		fprintf(stdout, "LOOP! %d\n%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n\n", count, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15]);
-		fprintf(stdout, "RET %.2X\n", owi_calcCRC(buffer + 8, 7));
+		owi_matchROM(&dsconn, buffer);
+		owi_readScratchpad(&dsconn, buf, 9);
+
+		fprintf(stdout, "LOOP! %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
+		fprintf(stdout, "TMP %u.%04u \n", ((buf[0] >> 4) | ((buf[1]&0x7)<<4)), (buf[0] & 0xF) * 625);
 	}
 
     return 0;
