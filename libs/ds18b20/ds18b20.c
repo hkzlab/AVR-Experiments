@@ -3,9 +3,37 @@
 
 #define DS18B20_DEVCODE 0x28
 
-#define DS18B20_START_CONVERSION 0x44
+typedef enum {
+	ds_startTempConversion = 0x44,
+	ds_recallEE = 0xB8,
+	ds_writeEE = 0x48
+} ds18b20_cmd;
 
 static uint16_t thrm_decimal_steps[] = {5000, 2500, 1250, 625}; // Taken from datasheet
+
+void ds18b20_writeEEPROM(owi_conn *conn, uint8_t addr[8]) {
+	owi_reset(conn);
+	if (addr) {
+		owi_matchROM(conn, addr);
+	} else {
+		owi_skipROM(conn);
+	}
+
+	owi_writeByte(conn, ds_writeEE);
+	owi_reset(conn);
+}
+
+void ds18b20_readEEPROM(owi_conn *conn, uint8_t addr[8]) {
+	owi_reset(conn);
+	if (addr) {
+		owi_matchROM(conn, addr);
+	} else {
+		owi_skipROM(conn);
+	}
+
+	owi_writeByte(conn, ds_recallEE);
+	owi_reset(conn);
+}
 
 uint8_t ds18b20_checkROMValidity(uint8_t addr[8]) {
 	return (owi_calcCRC(addr, 7) == addr[7]);
@@ -60,7 +88,7 @@ void ds18b20_startTempConversion(owi_conn *conn, uint8_t addr[8]) {
 		owi_skipROM(conn);
 	}
 
-	owi_writeByte(conn, DS18B20_START_CONVERSION);
+	owi_writeByte(conn, ds_startTempConversion);
 	owi_reset(conn);
 }
 

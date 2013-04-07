@@ -23,5 +23,7 @@ ds18b20_cfg ds18b20_getCFG(owi_conn *conn, uint8_t addr[8]);
 void ds18b20_setCFG(owi_conn *conn, uint8_t addr[8], ds18b20_cfg *cfg);
 void ds18b20_startTempConversion(owi_conn *conn, uint8_t addr[8]);
 uint8_t ds18b20_getTemp(owi_conn *conn, uint8_t addr[8], int8_t *integer, uint16_t *decimal);
+void ds18b20_writeEEPROM(owi_conn *conn, uint8_t addr[8]);
+void ds18b20_readEEPROM(owi_conn *conn, uint8_t addr[8]);
 
 #endif /* _DS18B20_HEADER_ */
