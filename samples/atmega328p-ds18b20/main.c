@@ -37,14 +37,23 @@ int main(void) {
 	owi_reset(&dsconn);
 	owi_searchROM(&dsconn, buffer, &count, 0);
 
+	ds18b20_cfg dscfg;
+	dscfg.thrmcfg = DS_THRM_11BIT;
+	dscfg.lT = 1;
+	dscfg.hT = 1;
+	ds18b20_setCFG(&dsconn, NULL, &dscfg);
+//	ds18b20_writeEEPROM(&dsconn, NULL);
+
 	int8_t integ;
 	uint16_t decim;
+
+//	ds18b20_readEEPROM(&dsconn, NULL);
 
 	while (1) {
 		ds18b20_startTempConversion(&dsconn, NULL);
 		_delay_ms(1000);		
 		ds18b20_getTemp(&dsconn, buffer, &integ, &decim);
-		fprintf(stdout, "%d.%04u\n", integ, decim);
+		fprintf(stdout, "%d.%u\n", integ, decim);
 	}
 
     return 0;

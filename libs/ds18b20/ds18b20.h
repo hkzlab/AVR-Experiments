@@ -19,7 +19,7 @@ typedef struct {
 
 uint8_t ds18b20_checkROMValidity(uint8_t addr[8]);
 uint8_t *ds18b20_buildFullROMAddress(uint8_t shortAddr[6]);
-ds18b20_cfg ds18b20_getCFG(owi_conn *conn, uint8_t addr[8]);
+ds18b20_cfg *ds18b20_getCFG(owi_conn *conn, uint8_t addr[8]);
 void ds18b20_setCFG(owi_conn *conn, uint8_t addr[8], ds18b20_cfg *cfg);
 void ds18b20_startTempConversion(owi_conn *conn, uint8_t addr[8]);
 uint8_t ds18b20_getTemp(owi_conn *conn, uint8_t addr[8], int8_t *integer, uint16_t *decimal);
