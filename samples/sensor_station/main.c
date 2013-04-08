@@ -5,6 +5,8 @@
 #include <avr/sleep.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <util/delay.h>
 
 #include "main.h"
@@ -17,9 +19,15 @@
 #include "twilib.h"
 #include "ds1307.h"
 
+#include "owilib.h"
+#include "ds18b20.h"
+
 #define  SRAM_CHKVAL 0xDEAD
 
 static hd44780_driver *lcdDriver = NULL;
+static owi_conn *dsconn;
+static uint8_t *sensor_addrs, sensor_count;
+
 static volatile int8_t pressedKey = -1;
 static volatile int8_t clock_sec = 0;
 
@@ -72,9 +80,14 @@ void print_standardClock(void);
 void send_to_sleep(void);
 
 int main(void) {
+	char str_buffer[20];
+
 	sys_setup();
 
 	print_standardClock();
+	print_sensors();
+
+	uint8_t curSensor = 0;
 
 	uint8_t clkCounter = 0;
 	int8_t curKey;
@@ -97,15 +110,53 @@ int main(void) {
 			pressedKey = -1;
 
 			switch (curKey) {
+			case 0:
+			case 1:
+			case 2:
+				if (curKey < sensor_count)
+					curSensor = curKey;
+				break;
+			case 4:
+			case 5:
+			case 6:
+				if (curKey - 1 < sensor_count)
+					curSensor = curKey - 1;				
+				break;
+			case 8:
+			case 9:
+			case 10:
+				if (curKey - 2 < sensor_count)				
+					curSensor = curKey - 2;				
+				break;
+			case 13:
+				if (curKey - 3 < sensor_count)				
+					curSensor = curKey - 3;
+				break;
 			case 11:
 				clock_setup(1);
 				print_standardClock();
+				print_sensors();
+				hd44780_hl_setCursor(lcdDriver, 0, 0);	
 				break;
 			default:
 				break;
 			}
 		}
 
+		if (sensor_count && curSensor < sensor_count) {
+			int8_t integ;
+			uint16_t decim;
+
+			ds18b20_getTemp(dsconn, sensor_addrs + (8 * curSensor), &integ, &decim);
+			sprintf(str_buffer, "%.2u: %.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X", curSensor + 1, sensor_addrs[(8 * curSensor) + 0], sensor_addrs[(8 * curSensor) + 1], sensor_addrs[(8 * curSensor) + 2], sensor_addrs[(8 * curSensor) + 3], sensor_addrs[(8 * curSensor) + 4], sensor_addrs[(8 * curSensor) + 5], sensor_addrs[(8 * curSensor) + 6], sensor_addrs[(8 * curSensor) + 7]);
+			hd44780_hl_printText(lcdDriver, 2, 0, str_buffer);
+			sprintf(str_buffer, "Temperatura %c%.2d.%u", integ < 0 ? '-' : '+', integ < 0 ? -integ : integ, decim);
+			hd44780_hl_printText(lcdDriver, 3, 0, str_buffer);			
+		}
+
+		// Ask for temperature conversion
+		ds18b20_startTempConversion(dsconn, NULL);
+		
 		// Sleep time...		
 		send_to_sleep();
 	}
@@ -132,7 +183,31 @@ void print_standardClock(void) {
 	hd44780_hl_printText(lcdDriver, 0, 0, timeStrBuffer);
 }
 
+void print_sensors(void) {
+	char strBuffer[21];
+
+	sprintf(strBuffer, "Sensori:");
+	uint8_t idx = 9;
+
+	strBuffer[idx - 1] = ' ';	
+	strBuffer[idx + 0] = sensor_count > 0 ? '1' : '_';
+	strBuffer[idx + 1] = sensor_count > 1 ? '2' : '_';
+	strBuffer[idx + 2] = sensor_count > 2 ? '3' : '_';
+	strBuffer[idx + 3] = sensor_count > 3 ? '4' : '_';
+	strBuffer[idx + 4] = sensor_count > 4 ? '5' : '_';
+	strBuffer[idx + 5] = sensor_count > 5 ? '6' : '_';
+	strBuffer[idx + 6] = sensor_count > 6 ? '7' : '_';
+	strBuffer[idx + 7] = sensor_count > 7 ? '8' : '_';
+	strBuffer[idx + 8] = sensor_count > 8 ? '9' : '_';
+	strBuffer[idx + 9] = sensor_count > 9 ? '0' : '_';
+	strBuffer[idx + 10] = 0;
+
+	hd44780_hl_printText(lcdDriver, 1, 0, strBuffer);
+}
+
 void sys_setup(void) {
+	char strbuf[40];
+
 	// Initialize serial port for output
 	uart_init();
 	stdout = &uart_output;
@@ -147,6 +222,12 @@ void sys_setup(void) {
 	PORTB &= 0xF0;
 	DDRD &= 0x7F; // Last pin of Port D set as Input (will be used as interrupt)
 	PORTD &= 0x7F;
+
+	dsconn = (owi_conn*)malloc(sizeof(owi_conn));
+	dsconn->port = &PORTD;
+	dsconn->pin = &PIND;
+	dsconn->ddr = &DDRD;
+	dsconn->pinNum = 7;
 
 	// Enable interrupts
 	EIMSK |= 1 << INT1;  //Enable INT0
@@ -199,6 +280,27 @@ void sys_setup(void) {
 	EICRA |= 1 << (1 << ISC00) | (1 << ISC01); //Trigger on rising edge of INT0
 
 	hd44780_hl_clear(lcdDriver);
+
+	owi_reset(dsconn);
+	owi_searchROM(dsconn, NULL, &sensor_count, 0);
+
+	sprintf(strbuf, "Sensori individuati\n%u\n", sensor_count);
+	hd44780_hl_printText(lcdDriver, 0, 0, strbuf);
+
+	if (sensor_count) {
+		sensor_addrs = (uint8_t*)malloc(8 * sensor_count);
+		owi_searchROM(dsconn, sensor_addrs, &sensor_count, 0);		
+
+		ds18b20_cfg dscfg;
+		dscfg.thrmcfg = DS_THRM_12BIT;
+		dscfg.lT = 0;
+		dscfg.hT = 0;
+		ds18b20_setCFG(dsconn, NULL, &dscfg);
+	}
+
+	_delay_ms(2000);
+
+	hd44780_hl_clear(lcdDriver);	
 
 	fprintf(stdout, "Starting up.\n");
 }

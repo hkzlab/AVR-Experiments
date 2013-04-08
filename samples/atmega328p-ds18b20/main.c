@@ -53,7 +53,7 @@ int main(void) {
 		ds18b20_startTempConversion(&dsconn, NULL);
 		_delay_ms(1000);		
 		ds18b20_getTemp(&dsconn, buffer, &integ, &decim);
-		fprintf(stdout, "%d.%u\n", integ, decim);
+		fprintf(stdout, "%d.%.4u\n", integ, decim);
 	}
 
     return 0;

@@ -44,7 +44,7 @@ TARGET = main
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/shifter_74595/shifter_74595.c \
 	  ../../libs/hd44780/hd44780-commands.c ../../libs/hd44780/hd44780-74595-interface.c ../../libs/hd44780/hd44780-highlevel.c \
-	  ../../libs/ds1307/ds1307.c ../../libs/twilib/twilib.c
+	  ../../libs/ds1307/ds1307.c ../../libs/twilib/twilib.c ../../libs/owilib/owilib.c ../../libs/ds18b20/ds18b20.c
 
 
 # List Assembler source files here.
@@ -94,7 +94,8 @@ CDEFS = -DF_CPU=$(F_CPU)UL
 
 
 # Place -I options here
-CINCS = -I../../libs/ -I../../libs/uart/ -I../../libs/shifter_74595/ -I../../libs/hd44780/ -I../../libs/ds1307/ -I../../libs/twilib/
+CINCS = -I../../libs/ -I../../libs/uart/ -I../../libs/shifter_74595/ -I../../libs/hd44780/ -I../../libs/ds1307/ -I../../libs/twilib/ \
+		-I../../libs/ds18b20/ -I../../libs/owilib/
 
 
 
