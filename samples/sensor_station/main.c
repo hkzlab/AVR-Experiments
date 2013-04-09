@@ -40,7 +40,7 @@ static minmax_temp mmsens;
 static volatile int8_t pressedKey = -1;
 static volatile int8_t clock_sec = 0;
 
-static uint8_t lcd_graphics[4][8] = {{
+static uint8_t lcd_graphics[5][8] = {{
 		0b00001110,
 		0b00011011,
 		0b00011111,
@@ -79,6 +79,16 @@ static uint8_t lcd_graphics[4][8] = {{
 		0b00011111,
 		0b00011111,
 		0b00001000
+	},
+	{
+		0b00000100,
+		0b00001110,
+		0b00011111,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+		0b00000100,
+		0b00000000
 	}
 };
 
@@ -89,12 +99,15 @@ void print_standardClock(void);
 void send_to_sleep(void);
 void print_sensors(void);
 void get_minmaxTemp(void);
+uint16_t bsd_chksum(uint8_t *buf, uint8_t len);
 
 int main(void) {
 	char str_buffer[21];
 
 	sys_setup();
 
+	// First temp conversion
+	ds18b20_startTempConversion(dsconn, NULL);	
 	get_minmaxTemp(); 
 
 	print_standardClock();
@@ -159,12 +172,22 @@ int main(void) {
 
 		if (sensor_count && curSensor < sensor_count) {
 			int8_t integ;
-			uint16_t decim;
+			uint16_t decim, crc;
 
-			ds18b20_getTemp(dsconn, sensor_addrs + (8 * curSensor), &integ, &decim);
-			sprintf(str_buffer, "%.2u: %.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X", curSensor + 1, sensor_addrs[(8 * curSensor) + 0], sensor_addrs[(8 * curSensor) + 1], sensor_addrs[(8 * curSensor) + 2], sensor_addrs[(8 * curSensor) + 3], sensor_addrs[(8 * curSensor) + 4], sensor_addrs[(8 * curSensor) + 5], sensor_addrs[(8 * curSensor) + 6], sensor_addrs[(8 * curSensor) + 7]);
+			//sprintf(str_buffer, "%.2u: %.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X", curSensor + 1, sensor_addrs[(8 * curSensor) + 0], sensor_addrs[(8 * curSensor) + 1], sensor_addrs[(8 * curSensor) + 2], sensor_addrs[(8 * curSensor) + 3], sensor_addrs[(8 * curSensor) + 4], sensor_addrs[(8 * curSensor) + 5], sensor_addrs[(8 * curSensor) + 6], sensor_addrs[(8 * curSensor) + 7]);
+			
+			crc = bsd_chksum(sensor_addrs + (8 * curSensor) + 1, 7);
+			sprintf(str_buffer, "ID:%.4X", crc);
 			hd44780_hl_printText(lcdDriver, 2, 0, str_buffer);
 
+			for (uint8_t idx = 0; idx < 21; idx++)
+				str_buffer[idx] = ' ';
+			str_buffer[13] = 0;
+			str_buffer[2 + curSensor] = 3;
+
+			hd44780_hl_printText(lcdDriver, 2, 7, str_buffer);
+
+			ds18b20_getTemp(dsconn, sensor_addrs + (8 * curSensor), &integ, &decim);			
 			sprintf(str_buffer, "Temperatura %c%.2d.%.4u", integ < 0 ? '-' : '+', integ < 0 ? -integ : integ, decim);
 			hd44780_hl_printText(lcdDriver, 3, 0, str_buffer);			
 		}
@@ -284,6 +307,7 @@ void sys_setup(void) {
 	lcdDriver = hd44780_hl_createDriver(TMBC20464BSP_20x4, conn_struct, (uint8_t ( *)(void *))hd44780_74595_initLCD4Bit, (void ( *)(void *, uint16_t))hd44780_74595_sendCommand);
 	hd44780_hl_init(lcdDriver, 0, 0);
 
+	hd44780_hl_setCustomFont(lcdDriver, 3, lcd_graphics[4]);	
 	hd44780_hl_setCustomFont(lcdDriver, 4, lcd_graphics[0]);
 	hd44780_hl_setCustomFont(lcdDriver, 5, lcd_graphics[1]);
 	hd44780_hl_setCustomFont(lcdDriver, 6, lcd_graphics[2]);
@@ -466,4 +490,14 @@ ISR(INT1_vect) {
 	pressedKey = PINB & 0xF;
 }
 
+uint16_t bsd_chksum(uint8_t *buf, uint8_t len) {
+	uint16_t chk = 0;
+
+	for (uint8_t idx = 0; idx < len; idx++) {
+		chk = (chk >> 1) + ((chk & 1) << 15);
+		chk += buf[idx]; 
+	}
+
+	return chk;
+}
 
