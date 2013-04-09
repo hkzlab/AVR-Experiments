@@ -24,9 +24,18 @@
 
 #define  SRAM_CHKVAL 0xDEAD
 
+typedef struct {
+	int8_t minInt, maxInt;
+	uint16_t minDec, maxDec;
+	uint8_t minSens, maxSens;
+	DS1307_ToD minTime, maxTime;
+} minmax_temp;
+
 static hd44780_driver *lcdDriver = NULL;
 static owi_conn *dsconn;
 static uint8_t *sensor_addrs, sensor_count;
+
+static minmax_temp mmsens;
 
 static volatile int8_t pressedKey = -1;
 static volatile int8_t clock_sec = 0;
@@ -78,11 +87,15 @@ void clock_setup(uint8_t backEnabled);
 int clock_checkAndSet(int8_t *data);
 void print_standardClock(void);
 void send_to_sleep(void);
+void print_sensors(void);
+void get_minmaxTemp(void);
 
 int main(void) {
-	char str_buffer[20];
+	char str_buffer[21];
 
 	sys_setup();
+
+	get_minmaxTemp(); 
 
 	print_standardClock();
 	print_sensors();
@@ -103,6 +116,7 @@ int main(void) {
 			clkCounter = 0;
 
 			print_standardClock();
+			get_minmaxTemp();
 		}
 
 		if (pressedKey >= 0) {
@@ -150,7 +164,8 @@ int main(void) {
 			ds18b20_getTemp(dsconn, sensor_addrs + (8 * curSensor), &integ, &decim);
 			sprintf(str_buffer, "%.2u: %.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X", curSensor + 1, sensor_addrs[(8 * curSensor) + 0], sensor_addrs[(8 * curSensor) + 1], sensor_addrs[(8 * curSensor) + 2], sensor_addrs[(8 * curSensor) + 3], sensor_addrs[(8 * curSensor) + 4], sensor_addrs[(8 * curSensor) + 5], sensor_addrs[(8 * curSensor) + 6], sensor_addrs[(8 * curSensor) + 7]);
 			hd44780_hl_printText(lcdDriver, 2, 0, str_buffer);
-			sprintf(str_buffer, "Temperatura %c%.2d.%u", integ < 0 ? '-' : '+', integ < 0 ? -integ : integ, decim);
+
+			sprintf(str_buffer, "Temperatura %c%.2d.%.4u", integ < 0 ? '-' : '+', integ < 0 ? -integ : integ, decim);
 			hd44780_hl_printText(lcdDriver, 3, 0, str_buffer);			
 		}
 
@@ -203,6 +218,32 @@ void print_sensors(void) {
 	strBuffer[idx + 10] = 0;
 
 	hd44780_hl_printText(lcdDriver, 1, 0, strBuffer);
+}
+
+void get_minmaxTemp(void) {
+	int8_t integ;
+	uint16_t decim;
+
+	DS1307_ToD time;
+	DS1307_readToD(&time);	
+
+	for (uint8_t idx = 0; idx < sensor_count; idx++) {
+			ds18b20_getTemp(dsconn, sensor_addrs + (8 * idx), &integ, &decim);
+
+			if (integ < mmsens.minInt || ((integ == mmsens.minInt) && (decim < mmsens.minDec))) {
+				mmsens.minInt = integ;
+				mmsens.minDec = decim;
+				mmsens.minSens = idx;
+				mmsens.minTime = time;
+			}
+		
+			if (integ > mmsens.maxInt || ((integ == mmsens.maxInt) && (decim > mmsens.maxDec))) {
+				mmsens.maxInt = integ;
+				mmsens.maxDec = decim;
+				mmsens.maxSens = idx;
+				mmsens.maxTime = time;				
+			}					
+	}
 }
 
 void sys_setup(void) {
@@ -301,6 +342,10 @@ void sys_setup(void) {
 	_delay_ms(2000);
 
 	hd44780_hl_clear(lcdDriver);	
+
+	// Ensure we'll update the values
+	mmsens.minInt = 127;
+	mmsens.maxInt = -127;
 
 	fprintf(stdout, "Starting up.\n");
 }

@@ -147,6 +147,10 @@ uint8_t ds18b20_getTemp(owi_conn *conn, uint8_t addr[8], int8_t *integer, uint16
 	*decimal = (buf[0] & mask) >> shft; 
 	*decimal *= thrm_decimal_steps[cfg->thrmcfg];
 
+	*decimal = *decimal < 10 ? *decimal * 1000 : *decimal;
+	*decimal = *decimal < 100 ? *decimal * 100 : *decimal;
+	*decimal = *decimal < 1000 ? *decimal * 10 : *decimal;
+
 	free(cfg);
 
 	return 1;
