@@ -33,7 +33,7 @@ typedef struct {
 
 static hd44780_driver *lcdDriver = NULL;
 static owi_conn *dsconn;
-static uint8_t *sensor_addrs, sensor_count;
+static uint8_t *sensor_addrs, *sensors_hash, sensor_count;
 
 static minmax_temp mmsens;
 
@@ -99,7 +99,7 @@ void print_standardClock(void);
 void send_to_sleep(void);
 void print_sensors(void);
 void get_minmaxTemp(void);
-uint16_t bsd_chksum(uint8_t *buf, uint8_t len);
+uint8_t pearson_hash(uint8_t *buf, uint8_t len);
 
 int main(void) {
 	char str_buffer[21];
@@ -107,8 +107,8 @@ int main(void) {
 	sys_setup();
 
 	// First temp conversion
-	ds18b20_startTempConversion(dsconn, NULL);	
-	get_minmaxTemp(); 
+	ds18b20_startTempConversion(dsconn, NULL);
+	get_minmaxTemp();
 
 	print_standardClock();
 	print_sensors();
@@ -122,7 +122,7 @@ int main(void) {
 			clock_sec = 0;
 			clkCounter++;
 
-			 hd44780_hl_printChar(lcdDriver, 0, 15, clkCounter % 2 ? ':' : ' ');
+			hd44780_hl_printChar(lcdDriver, 0, 15, clkCounter % 2 ? ':' : ' ');
 		}
 
 		if (!(clkCounter % 30)) {
@@ -147,23 +147,23 @@ int main(void) {
 			case 5:
 			case 6:
 				if (curKey - 1 < sensor_count)
-					curSensor = curKey - 1;				
+					curSensor = curKey - 1;
 				break;
 			case 8:
 			case 9:
 			case 10:
-				if (curKey - 2 < sensor_count)				
-					curSensor = curKey - 2;				
+				if (curKey - 2 < sensor_count)
+					curSensor = curKey - 2;
 				break;
 			case 13:
-				if (curKey - 3 < sensor_count)				
+				if (curKey - 3 < sensor_count)
 					curSensor = curKey - 3;
 				break;
 			case 11:
 				clock_setup(1);
 				print_standardClock();
 				print_sensors();
-				hd44780_hl_setCursor(lcdDriver, 0, 0);	
+				hd44780_hl_setCursor(lcdDriver, 0, 0);
 				break;
 			default:
 				break;
@@ -172,12 +172,11 @@ int main(void) {
 
 		if (sensor_count && curSensor < sensor_count) {
 			int8_t integ;
-			uint16_t decim, crc;
+			uint16_t decim;
 
 			//sprintf(str_buffer, "%.2u: %.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X", curSensor + 1, sensor_addrs[(8 * curSensor) + 0], sensor_addrs[(8 * curSensor) + 1], sensor_addrs[(8 * curSensor) + 2], sensor_addrs[(8 * curSensor) + 3], sensor_addrs[(8 * curSensor) + 4], sensor_addrs[(8 * curSensor) + 5], sensor_addrs[(8 * curSensor) + 6], sensor_addrs[(8 * curSensor) + 7]);
-			
-			crc = bsd_chksum(sensor_addrs + (8 * curSensor) + 1, 7);
-			sprintf(str_buffer, "ID:%.4X", crc);
+
+			sprintf(str_buffer, "id 0x%.2X", sensors_hash[curSensor]);
 			hd44780_hl_printText(lcdDriver, 2, 0, str_buffer);
 
 			for (uint8_t idx = 0; idx < 21; idx++)
@@ -187,15 +186,15 @@ int main(void) {
 
 			hd44780_hl_printText(lcdDriver, 2, 7, str_buffer);
 
-			ds18b20_getTemp(dsconn, sensor_addrs + (8 * curSensor), &integ, &decim);			
+			ds18b20_getTemp(dsconn, sensor_addrs + (8 * curSensor), &integ, &decim);
 			sprintf(str_buffer, "Temperatura %c%.2d.%.4u", integ < 0 ? '-' : '+', integ < 0 ? -integ : integ, decim);
-			hd44780_hl_printText(lcdDriver, 3, 0, str_buffer);			
+			hd44780_hl_printText(lcdDriver, 3, 0, str_buffer);
 		}
 
 		// Ask for temperature conversion
 		ds18b20_startTempConversion(dsconn, NULL);
-		
-		// Sleep time...		
+
+		// Sleep time...
 		send_to_sleep();
 	}
 
@@ -203,8 +202,8 @@ int main(void) {
 }
 
 void send_to_sleep(void) {
-	sleep_enable();		
-	set_sleep_mode(SLEEP_MODE_PWR_DOWN);		
+	sleep_enable();
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	cli();
 	sleep_bod_disable();
 	sei();
@@ -227,7 +226,7 @@ void print_sensors(void) {
 	sprintf(strBuffer, "Sensori:");
 	uint8_t idx = 9;
 
-	strBuffer[idx - 1] = ' ';	
+	strBuffer[idx - 1] = ' ';
 	strBuffer[idx + 0] = sensor_count > 0 ? '1' : '_';
 	strBuffer[idx + 1] = sensor_count > 1 ? '2' : '_';
 	strBuffer[idx + 2] = sensor_count > 2 ? '3' : '_';
@@ -248,24 +247,24 @@ void get_minmaxTemp(void) {
 	uint16_t decim;
 
 	DS1307_ToD time;
-	DS1307_readToD(&time);	
+	DS1307_readToD(&time);
 
 	for (uint8_t idx = 0; idx < sensor_count; idx++) {
-			ds18b20_getTemp(dsconn, sensor_addrs + (8 * idx), &integ, &decim);
+		ds18b20_getTemp(dsconn, sensor_addrs + (8 * idx), &integ, &decim);
 
-			if (integ < mmsens.minInt || ((integ == mmsens.minInt) && (decim < mmsens.minDec))) {
-				mmsens.minInt = integ;
-				mmsens.minDec = decim;
-				mmsens.minSens = idx;
-				mmsens.minTime = time;
-			}
-		
-			if (integ > mmsens.maxInt || ((integ == mmsens.maxInt) && (decim > mmsens.maxDec))) {
-				mmsens.maxInt = integ;
-				mmsens.maxDec = decim;
-				mmsens.maxSens = idx;
-				mmsens.maxTime = time;				
-			}					
+		if (integ < mmsens.minInt || ((integ == mmsens.minInt) && (decim < mmsens.minDec))) {
+			mmsens.minInt = integ;
+			mmsens.minDec = decim;
+			mmsens.minSens = idx;
+			mmsens.minTime = time;
+		}
+
+		if (integ > mmsens.maxInt || ((integ == mmsens.maxInt) && (decim > mmsens.maxDec))) {
+			mmsens.maxInt = integ;
+			mmsens.maxDec = decim;
+			mmsens.maxSens = idx;
+			mmsens.maxTime = time;
+		}
 	}
 }
 
@@ -287,7 +286,7 @@ void sys_setup(void) {
 	DDRD &= 0x7F; // Last pin of Port D set as Input (will be used as interrupt)
 	PORTD &= 0x7F;
 
-	dsconn = (owi_conn*)malloc(sizeof(owi_conn));
+	dsconn = (owi_conn *)malloc(sizeof(owi_conn));
 	dsconn->port = &PORTD;
 	dsconn->pin = &PIND;
 	dsconn->ddr = &DDRD;
@@ -307,7 +306,7 @@ void sys_setup(void) {
 	lcdDriver = hd44780_hl_createDriver(TMBC20464BSP_20x4, conn_struct, (uint8_t ( *)(void *))hd44780_74595_initLCD4Bit, (void ( *)(void *, uint16_t))hd44780_74595_sendCommand);
 	hd44780_hl_init(lcdDriver, 0, 0);
 
-	hd44780_hl_setCustomFont(lcdDriver, 3, lcd_graphics[4]);	
+	hd44780_hl_setCustomFont(lcdDriver, 3, lcd_graphics[4]);
 	hd44780_hl_setCustomFont(lcdDriver, 4, lcd_graphics[0]);
 	hd44780_hl_setCustomFont(lcdDriver, 5, lcd_graphics[1]);
 	hd44780_hl_setCustomFont(lcdDriver, 6, lcd_graphics[2]);
@@ -353,8 +352,13 @@ void sys_setup(void) {
 	hd44780_hl_printText(lcdDriver, 0, 0, strbuf);
 
 	if (sensor_count) {
-		sensor_addrs = (uint8_t*)malloc(8 * sensor_count);
-		owi_searchROM(dsconn, sensor_addrs, &sensor_count, 0);		
+		sensor_addrs = (uint8_t *)malloc(8 * sensor_count);
+		sensors_hash = (uint8_t *)malloc(sensor_count);
+		owi_searchROM(dsconn, sensor_addrs, &sensor_count, 0);
+
+		for (uint8_t idx = 0; idx < sensor_count; idx++) {
+			sensors_hash[idx] = pearson_hash(sensor_addrs + (8 * idx) + 1, 7);
+		}
 
 		ds18b20_cfg dscfg;
 		dscfg.thrmcfg = DS_THRM_12BIT;
@@ -365,7 +369,7 @@ void sys_setup(void) {
 
 	_delay_ms(2000);
 
-	hd44780_hl_clear(lcdDriver);	
+	hd44780_hl_clear(lcdDriver);
 
 	// Ensure we'll update the values
 	mmsens.minInt = 127;
@@ -490,14 +494,33 @@ ISR(INT1_vect) {
 	pressedKey = PINB & 0xF;
 }
 
-uint16_t bsd_chksum(uint8_t *buf, uint8_t len) {
-	uint16_t chk = 0;
+#define PEARSON_PERMUTATION_SIZE 256
+const static uint8_t pearson_permutation[PEARSON_PERMUTATION_SIZE] = {
+	1, 87, 49, 12, 176, 178, 102, 166, 121, 193, 6, 84, 249, 230, 44, 163,
+	14, 197, 213, 181, 161, 85, 218, 80, 64, 239, 24, 226, 236, 142, 38, 200,
+	110, 177, 104, 103, 141, 253, 255, 50, 77, 101, 81, 18, 45, 96, 31, 222,
+	25, 107, 190, 70, 86, 237, 240, 34, 72, 242, 20, 214, 244, 227, 149, 235,
+	97, 234, 57, 22, 60, 250, 82, 175, 208, 5, 127, 199, 111, 62, 135, 248,
+	174, 169, 211, 58, 66, 154, 106, 195, 245, 171, 17, 187, 182, 179, 0, 243,
+	132, 56, 148, 75, 128, 133, 158, 100, 130, 126, 91, 13, 153, 246, 216, 219,
+	119, 68, 223, 78, 83, 88, 201, 99, 122, 11, 92, 32, 136, 114, 52, 10,
+	138, 30, 48, 183, 156, 35, 61, 26, 143, 74, 251, 94, 129, 162, 63, 152,
+	170, 7, 115, 167, 241, 206, 3, 150, 55, 59, 151, 220, 90, 53, 23, 131,
+	125, 173, 15, 238, 79, 95, 89, 16, 105, 137, 225, 224, 217, 160, 37, 123,
+	118, 73, 2, 157, 46, 116, 9, 145, 134, 228, 207, 212, 202, 215, 69, 229,
+	27, 188, 67, 124, 168, 252, 42, 4, 29, 108, 21, 247, 19, 205, 39, 203,
+	233, 40, 186, 147, 198, 192, 155, 33, 164, 191, 98, 204, 165, 180, 117, 76,
+	140, 36, 210, 172, 41, 54, 159, 8, 185, 232, 113, 196, 231, 47, 146, 120,
+	51, 65, 28, 144, 254, 221, 93, 189, 194, 139, 112, 43, 71, 109, 184, 209
+};
 
+uint8_t pearson_hash(uint8_t *buf, uint8_t len) {
+	uint8_t h = 0;
+	uint8_t pIndex;
 	for (uint8_t idx = 0; idx < len; idx++) {
-		chk = (chk >> 1) + ((chk & 1) << 15);
-		chk += buf[idx]; 
+		pIndex = h ^ buf[idx];
+		h = pearson_permutation[pIndex];
 	}
 
-	return chk;
+	return h;
 }
-
