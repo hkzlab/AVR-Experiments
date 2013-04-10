@@ -9,7 +9,7 @@ typedef enum {
 	ds_writeEE = 0x48
 } ds18b20_cmd;
 
-static uint16_t thrm_decimal_steps[] = {5, 25, 125, 625}; // Taken from datasheet
+static uint16_t thrm_decimal_steps[] = {5000, 2500, 1250, 625}; // Taken from datasheet
 
 void ds18b20_writeEEPROM(owi_conn *conn, uint8_t addr[8]) {
 	owi_reset(conn);
@@ -121,35 +121,27 @@ uint8_t ds18b20_getTemp(owi_conn *conn, uint8_t addr[8], int8_t *integer, uint16
 	*integer = 0;
 	*decimal = 0;
 
-	uint8_t mask = 0, shft = 0;
+	uint8_t mask = 0;
 	switch (cfg->thrmcfg) {
 		case DS_THRM_12BIT:
 			mask = 0x0F;
-			shft = 0;
 			break;
 		case DS_THRM_11BIT:
 			mask = 0x0E;
-			shft = 1;
 			break;
 		case DS_THRM_10BIT:
 			mask = 0x0C;
-			shft = 2;
 			break;
 		case DS_THRM_9BIT:
 			mask = 0x08;
-			shft = 3;
 			break;
 		default:
 			break;
 	}
 
 	*integer = (buf[0] >> 4) | ((buf[1] & 0x7) << 4);
-	*decimal = (buf[0] & mask) >> shft; 
+	*decimal = (buf[0] & mask); 
 	*decimal *= thrm_decimal_steps[cfg->thrmcfg];
-
-	*decimal = *decimal < 10 ? *decimal * 1000 : *decimal;
-	*decimal = *decimal < 100 ? *decimal * 100 : *decimal;
-	*decimal = *decimal < 1000 ? *decimal * 10 : *decimal;
 
 	free(cfg);
 
