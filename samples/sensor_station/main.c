@@ -94,6 +94,7 @@ static uint8_t lcd_graphics[5][8] = {{
 
 void sys_setup(void);
 void clock_setup(uint8_t backEnabled);
+void show_minmaxTemp(void);
 int clock_checkAndSet(int8_t *data);
 void print_standardClock(void);
 void send_to_sleep(void);
@@ -158,6 +159,12 @@ int main(void) {
 			case 13:
 				if (curKey - 3 < sensor_count)
 					curSensor = curKey - 3;
+				break;
+			case 7:
+				show_minmaxTemp();
+				print_standardClock();
+				print_sensors();
+				hd44780_hl_setCursor(lcdDriver, 0, 0);
 				break;
 			case 11:
 				clock_setup(1);
@@ -255,14 +262,14 @@ void get_minmaxTemp(void) {
 		if (integ < mmsens.minInt || ((integ == mmsens.minInt) && (decim < mmsens.minDec))) {
 			mmsens.minInt = integ;
 			mmsens.minDec = decim;
-			mmsens.minSens = idx;
+			mmsens.minSens = sensors_hash[idx];
 			mmsens.minTime = time;
 		}
 
 		if (integ > mmsens.maxInt || ((integ == mmsens.maxInt) && (decim > mmsens.maxDec))) {
 			mmsens.maxInt = integ;
 			mmsens.maxDec = decim;
-			mmsens.maxSens = idx;
+			mmsens.maxSens = sensors_hash[idx];
 			mmsens.maxTime = time;
 		}
 	}
@@ -406,6 +413,38 @@ int clock_checkAndSet(int8_t *data) {
 	DS1307_setSQW(1, 0, DS1307_SQW_1Hz);
 
 	return 1;
+}
+
+void show_minmaxTemp(void) { 
+	char strbuf[41];
+	uint8_t looping = 1;
+	uint8_t clkCounter = 10;
+
+	hd44780_hl_clear(lcdDriver);
+
+	sprintf(strbuf, "MAX 0x%.2X    %c%.2d.%.4u    %.2u/%.2u/%.4u %.2u:%.2u", mmsens.maxSens, mmsens.maxInt < 0 ? '-' : '+', mmsens.maxInt < 0 ? mmsens.maxInt * -1 : mmsens.maxInt, mmsens.maxDec, mmsens.maxTime.dayOfMonth, mmsens.maxTime.month, mmsens.maxTime.year, mmsens.maxTime.hours, mmsens.maxTime.minutes);
+	hd44780_hl_printText(lcdDriver, 0, 0, strbuf);
+	sprintf(strbuf, "MIN 0x%.2X    %c%.2d.%.4u    %.2u/%.2u/%.4u %.2u:%.2u", mmsens.minSens, mmsens.minInt < 0 ? '-' : '+', mmsens.minInt < 0 ? mmsens.minInt * -1 : mmsens.minInt, mmsens.minDec, mmsens.minTime.dayOfMonth, mmsens.minTime.month, mmsens.minTime.year, mmsens.minTime.hours, mmsens.minTime.minutes);
+	hd44780_hl_printText(lcdDriver, 2, 0, strbuf);	
+
+	while (looping) {
+		if (clock_sec) {
+			clock_sec = 0;
+			clkCounter--;
+
+			if (!clkCounter) looping = 0;
+		}
+
+		if (pressedKey >= 0) {
+			pressedKey = -1;
+
+			looping = 0;
+		}
+	}
+
+	hd44780_hl_clear(lcdDriver);
+	hd44780_hl_setCursor(lcdDriver, 0, 0);
+
 }
 
 void clock_setup(uint8_t backEnabled) {
