@@ -107,9 +107,14 @@ int main(void) {
 
 	sys_setup();
 
+	_delay_ms(500);
+
 	// First temp conversion
 	ds18b20_startTempConversion(dsconn, NULL);
+	_delay_ms(3000);
 	get_minmaxTemp();
+
+	hd44780_hl_clear(lcdDriver);
 
 	print_standardClock();
 	print_sensors();
@@ -373,10 +378,6 @@ void sys_setup(void) {
 		dscfg.hT = 0;
 		ds18b20_setCFG(dsconn, NULL, &dscfg);
 	}
-
-	_delay_ms(2000);
-
-	hd44780_hl_clear(lcdDriver);
 
 	// Ensure we'll update the values
 	mmsens.minInt = 127;
