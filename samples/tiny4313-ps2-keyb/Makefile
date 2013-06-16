@@ -51,7 +51,7 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c ../../libs/uart/uart.c
+SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/ps2_keyb/ps2_keyb.c
 
 # List Assembler source files here.
 #     Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -100,7 +100,7 @@ CDEFS = -DF_CPU=$(F_CPU)UL
 
 
 # Place -I options here
-CINCS = -I../../libs/ -I../../libs/uart/
+CINCS = -I../../libs/ -I../../libs/uart/ -I../../libs/ps2_keyb/
 
 
 
