@@ -37,6 +37,11 @@ static volatile uint8_t *kb_inPtr, *kb_outPtr, *kb_endPtr;
 
 static volatile uint8_t kb_data, kb_flag;
 
+int kb_parity_check(uint8_t kb_flag_i, uint8_t kb_data_i);
+void kb_pushScancode(uint8_t code);
+
+
+
 int kb_parity_check(uint8_t kb_flag_i, uint8_t kb_data_i) {
 	uint8_t result = 1;
 	uint8_t counter = 8;
@@ -92,6 +97,25 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 
 }
 
+void kb_pushScancode(uint8_t code) {
+	static uint8_t code_array[3];
+	static uint8_t cur = 0;
+
+	code_array[cur] = code;
+
+	switch (code) {
+		case PS2_SCANCODE_RELEASE: // Key released, expect at least another code!
+		case PS2_SCANCODE_EXTENDED: // Extended scancode, one or two more!
+			cur++;
+			break;
+		default:
+			printf("%.2X %.2X %.2X\n", code_array[0], code_array[1], code_array[2]);
+			cur = 0;
+			code_array[0] = code_array[1] = code_array[2] = 0;
+			break;
+	}
+}
+
 // See http://www.computer-engineering.org/ps2protocol/
 ISR(INT0_vect) { // Manage INT0
 	uint8_t kBit = 0;
@@ -118,8 +142,7 @@ ISR(INT0_vect) { // Manage INT0
 	} else { // Rising edge
 		if(!(--kb_bitCount)) {
 			if (!KB_START_BIT(kb_flag) && KB_STOP_BIT(kb_flag) && kb_parity_check(kb_flag, kb_data)) {
-				printf("%.2X\n", kb_data);
-					// TODO: Do something with the data
+				kb_pushScancode(kb_data);
 			} // Else... there was a problem somewhere, probably timing
 
 			kb_data = 0;
