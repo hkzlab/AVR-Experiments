@@ -36,5 +36,9 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
 	MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
 
+	// I suspect this to be totally useless...
+	//PCMSK |= (1<<PIND2);	// Enable pin change on INT0 (why is this required?)	
+	GIMSK |= (1 << INT0); // Enable INT0
+
 }
 
