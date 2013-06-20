@@ -1,7 +1,10 @@
 #include "ps2_keyb.h"
+#include "ps2_proto.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+
+#include <stdio.h>
 
 // Data port
 static volatile uint8_t *dPort, *dPin, *dDir;
@@ -104,10 +107,10 @@ ISR(INT0_vect) { // Manage INT0
 			if (kBit) kb_data |= 0x80; // Add a bit if the read data is one
 		} else if (kb_bitCount == 11) { // start bit, must always be 0!
 			KB_SET_START_BIT(kb_flag, kBit);
-		} else if (kb_bitCount == 9) { // Parity bit: 1 if there is an even number of 1s in the data bits
+		} else if (kb_bitCount == 2) { // Parity bit: 1 if there is an even number of 1s in the data bits
 			KB_SET_PARITY_BIT(kb_flag, kBit);			
-		} else if (kb_bitCount == 10) { // Stop bit, must always be 1!
-			KB_SET_STOP_BIT(kb_flag, kBit);			
+		} else if (kb_bitCount == 1) { // Stop bit, must always be 1!
+			KB_SET_STOP_BIT(kb_flag, kBit);	
 		}
 		clock_edge = KB_CLOCK_RISE;			// Ready for rising edge.
 
@@ -115,9 +118,9 @@ ISR(INT0_vect) { // Manage INT0
 	} else { // Rising edge
 		if(!(--kb_bitCount)) {
 			if (!KB_START_BIT(kb_flag) && KB_STOP_BIT(kb_flag) && kb_parity_check(kb_flag, kb_data)) {
-				;
+				printf("%.2X\n", kb_data);
 					// TODO: Do something with the data
-			} // Else... there was a problem somewhere
+			} // Else... there was a problem somewhere, probably timing
 
 			kb_data = 0;
 			kb_flag = 0;
