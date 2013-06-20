@@ -24,16 +24,27 @@ static volatile uint8_t keyBuffer[KEY_BUF_SIZE];
 static volatile uint8_t *kb_inPtr, *kb_outPtr, *kb_endPtr;
 
 #define KB_START_BIT(a) ((a >> 0) & 0x01)
-#define KB_PARITY_BIT(a) ((b >> 1) & 0x01)
-#define KB_STOP_BIT(a) ((c >> 2) & 0x01)
+#define KB_PARITY_BIT(a) ((a >> 1) & 0x01)
+#define KB_STOP_BIT(a) ((a >> 2) & 0x01)
 
 #define KB_SET_START_BIT(a, b) (a |= (b << 0))
 #define KB_SET_PARITY_BIT(a, b) (a |= (b << 1))
 #define KB_SET_STOP_BIT(a, b) (a |= (b << 2))
 
 
-static volatile uint8_t kb_data;
-static volatile uint8_t kb_flag;
+static volatile uint8_t kb_data, kb_flag;
+
+int kb_parity_check(uint8_t kb_flag_i, uint8_t kb_data_i) {
+	uint8_t result = 1;
+	uint8_t counter = 8;
+
+	while (counter--) {
+		result = kb_data_i & 0x1 ? !result : result;
+		kb_data_i >>= 1;
+	}
+
+	return (result == KB_PARITY_BIT(kb_flag_i));
+}
 
 // See http://avrprogrammers.com/example_avr_keyboard.php
 // http://elecrom.wordpress.com/2008/02/12/avr-tutorial-2-avr-input-output/
@@ -102,8 +113,11 @@ ISR(INT0_vect) { // Manage INT0
 
 		MCUCR |= ((1 << ISC00) | (1 << ISC01)); // Setup INT0 for rising edge.
 	} else { // Rising edge
-		if( (--kb_bitCount)) {
-			// TODO: Do something with the data
+		if(!(--kb_bitCount)) {
+			if (!KB_START_BIT(kb_flag) && KB_STOP_BIT(kb_flag) && kb_parity_check(kb_flag, kb_data)) {
+				;
+					// TODO: Do something with the data
+			} // Else... there was a problem somewhere
 
 			kb_data = 0;
 			kb_flag = 0;
@@ -116,4 +130,6 @@ ISR(INT0_vect) { // Manage INT0
 		MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
 	}
 }
+
+
 
