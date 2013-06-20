@@ -30,5 +30,11 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	// Prepare clock port
 	*cDir &= ~(1 << cPNum); // KB Clock line set as input
 	*cPort |= (1 << cPNum); // Pull-up resistor on clock line
+
+	// See http://www.avr-tutorials.com/interrupts/The-AVR-8-Bits-Microcontrollers-External-Interrupts
+	// And http://www.atmel.com/images/doc2543.pdf
+	MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
+	MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
+
 }
 
