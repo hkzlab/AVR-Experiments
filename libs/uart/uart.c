@@ -9,59 +9,88 @@
 
 /* http://www.cs.mun.ca/~rod/Winter2007/4723/notes/serial/serial.html */
 
-#if defined(__AVR_AT90Tiny2313__) | defined(__AVR_ATtiny2313__) | defined(__AVR_ATtiny4313__)
-#define UBRR0H UBRRH
-#define UBRR0L UBRRL
 
-#define UCSR0A UCSRA
-#define UCSR0C UCSRC
-#define UCSR0B UCSRB
+// token pasting
+#define token_paste2_int(x, y) x ## y
+#define token_paste2(x, y) token_paste2_int(x, y)
+#define token_paste3_int(x, y, z) x ## y ## z
+#define token_paste3(x, y, z) token_paste3_int(x, y, z)
 
-#define RXEN0 RXEN
-#define TXEN0 TXEN
-
-#define UCSZ00 UCSZ0
-#define UCSZ01 UCSZ1
-
-#ifdef UDR0 // ATTiny4313 headers have this already defined
-#undef UDR0
-#define UDR0 UDR
+#if defined(__SECOND_UART__)
+#define UART_NUMBER 1
+#else
+#define UART_NUMBER 0
 #endif
 
-#define UDRE0 UDRE
+#if defined(__AVR_AT90Tiny2313__) | defined(__AVR_ATtiny2313__) | defined(__AVR_ATtiny4313__)
+#define UART_UBRRH UBRRH
+#define UART_UBRRL UBRRL
 
-#define RXC0 RXC
+#define UART_UCSRA UCSRA
+#define UART_UCSRC UCSRC
+#define UART_UCSRB UCSRB
 
-#define U2X0 U2X
+#define UART_RXEN RXEN
+#define UART_TXEN TXEN
+
+#define UART_UCSZ0 UCSZ0
+#define UART_UCSZ1 UCSZ1
+
+#define UART_UDR UDR
+
+#define UART_UDRE UDRE
+
+#define UART_RXC RXC
+
+#define UART_U2X U2X
+
+#else // Not an ATTiny
+
+#define UART_UDR                token_paste2(UDR, UART_NUMBER)
+#define UART_UCSRA              token_paste3(UCSR, UART_NUMBER, A)
+#define UART_UCSRB              token_paste3(UCSR, UART_NUMBER, B)
+#define UART_UCSRC              token_paste3(UCSR, UART_NUMBER, C)
+#define UART_UBRR               token_paste2(UBRR, UART_NUMBER)
+#define UART_UBRRL              token_paste3(UBRR, UART_NUMBER, L)
+#define UART_UBRRH              token_paste3(UBRR, UART_NUMBER, H)
+
+#define UART_U2X				token_paste2(U2X, UART_NUMBER)
+#define UART_UDRE				token_paste2(UDRE, UART_NUMBER)
+#define UART_RXC				token_paste2(RXC, UART_NUMBER)
+#define UART_RXEN				token_paste2(RXEN, UART_NUMBER)
+#define UART_TXEN				token_paste2(TXEN, UART_NUMBER)
+
+#define UART_UCSZ0              token_paste3(UCSZ, UART_NUMBER, 0)
+#define UART_UCSZ1              token_paste3(UCSZ, UART_NUMBER, 1)
 
 #endif
 
 void uart_init(void) {
-    UBRR0H = UBRRH_VALUE;
-    UBRR0L = UBRRL_VALUE;
+    UART_UBRRH = UBRRH_VALUE;
+    UART_UBRRL = UBRRL_VALUE;
 
 #if USE_2X
-	UCSR0A |= (1 << U2X0);
+	UART_UCSRA |= (1 << UART_U2X);
 #else
-	UCSR0A &= ~(1 << U2X0);
+	UART_UCSRA &= ~(1 << UART_U2X);
 #endif
 
-    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00); /* 8-bit data */ 
-    UCSR0B = (1 << RXEN0) | (1 << TXEN0);   /* Enable RX and TX */    
+    UART_UCSRC = (1 << UART_UCSZ1) | (1 << UART_UCSZ0); /* 8-bit data */ 
+    UART_UCSRB = (1 << UART_RXEN) | (1 << UART_TXEN);   /* Enable RX and TX */    
 }
 
 int uart_putchar(char c, FILE *stream) {
     if (c == '\n') {
         uart_putchar('\r', stream);
     }
-    loop_until_bit_is_set(UCSR0A, UDRE0);
-    UDR0 = c;
+    loop_until_bit_is_set(UART_UCSRA, UART_UDRE);
+    UART_UDR = c;
 
     return 0;
 }
 
 int uart_getchar(FILE *stream) {
-    loop_until_bit_is_set(UCSR0A, RXC0);
+    loop_until_bit_is_set(UART_UCSRA, UART_RXC);
 
-    return UDR0;
+    return UART_UDR;
 }
