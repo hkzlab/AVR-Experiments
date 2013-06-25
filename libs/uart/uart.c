@@ -47,6 +47,8 @@
 #else // Not an ATTiny
 
 #define UART_UDR                token_paste2(UDR, UART_NUMBER)
+
+#undef UCSR
 #define UART_UCSRA              token_paste3(UCSR, UART_NUMBER, A)
 #define UART_UCSRB              token_paste3(UCSR, UART_NUMBER, B)
 #define UART_UCSRC              token_paste3(UCSR, UART_NUMBER, C)
@@ -55,11 +57,19 @@
 #define UART_UBRRH              token_paste3(UBRR, UART_NUMBER, H)
 
 #define UART_U2X				token_paste2(U2X, UART_NUMBER)
+
+#undef UDRE
 #define UART_UDRE				token_paste2(UDRE, UART_NUMBER)
+
+#undef RXC
 #define UART_RXC				token_paste2(RXC, UART_NUMBER)
+
+#undef RXEN
+#undef TXEN
 #define UART_RXEN				token_paste2(RXEN, UART_NUMBER)
 #define UART_TXEN				token_paste2(TXEN, UART_NUMBER)
 
+#undef UCSZ
 #define UART_UCSZ0              token_paste3(UCSZ, UART_NUMBER, 0)
 #define UART_UCSZ1              token_paste3(UCSZ, UART_NUMBER, 1)
 
