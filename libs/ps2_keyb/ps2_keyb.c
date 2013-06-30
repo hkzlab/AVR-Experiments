@@ -34,7 +34,6 @@ static volatile uint8_t *kb_inPtr, *kb_outPtr, *kb_endPtr;
 #define KB_SET_PARITY_BIT(a, b) (a |= (b << 1))
 #define KB_SET_STOP_BIT(a, b) (a |= (b << 2))
 
-
 static volatile uint8_t kb_data, kb_flag;
 
 int kb_parity_check(uint8_t kb_flag_i, uint8_t kb_data_i);
@@ -65,7 +64,11 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	cPort = &PORTD;
 	cPin = &PIND;
 	cDir = &DDRD;
+#if defined (__AVR_ATmega128__)
+	cPNum = 0; // PD0
+#else
 	cPNum = 2; // PD2
+#endif
 
 	// Prepare data port
 	*dDir &= ~(1 << dPNum); // KB Data line set as input
@@ -77,8 +80,14 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 
 	// See http://www.avr-tutorials.com/interrupts/The-AVR-8-Bits-Microcontrollers-External-Interrupts
 	// And http://www.atmel.com/images/doc2543.pdf
+
+#if defined (__AVR_ATmega128__)
+	EICRA &= ~((1 << ISC00) | (1 << ISC01)); 
+	EICRA |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
+#else	
 	MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
 	MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
+#endif
 
 	// I suspect this to be totally useless...
 	//PCMSK |= (1<<PIND2);	// Enable pin change on INT0 (why is this required?)
@@ -93,8 +102,12 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	kb_inPtr = kb_outPtr = keyBuffer;
 	kb_endPtr = kb_inPtr + KEY_BUF_SIZE;
 
-	GIMSK |= (1 << INT0); // Enable INT0
-
+	// Enable INT0
+#if defined (__AVR_ATmega128__)
+	EIMSK |= (1 << INT0);
+#else
+	GIMSK |= (1 << INT0);
+#endif
 }
 
 void kb_pushScancode(uint8_t code) {
@@ -138,7 +151,11 @@ ISR(INT0_vect) { // Manage INT0
 		}
 		clock_edge = KB_CLOCK_RISE;			// Ready for rising edge.
 
+#if defined (__AVR_ATmega128__)
+		EICRA |= ((1 << ISC00) | (1 << ISC01)); // Setup INT0 for rising edge.
+#else
 		MCUCR |= ((1 << ISC00) | (1 << ISC01)); // Setup INT0 for rising edge.
+#endif
 	} else { // Rising edge
 		if(!(--kb_bitCount)) {
 			if (!KB_START_BIT(kb_flag) && KB_STOP_BIT(kb_flag) && kb_parity_check(kb_flag, kb_data)) {
@@ -152,8 +169,13 @@ ISR(INT0_vect) { // Manage INT0
 		}
 		clock_edge = KB_CLOCK_FALL;		// Setup routine the next falling edge.
 
+#if defined (__AVR_ATmega128__)
+		EICRA &= ~((1 << ISC00) | (1 << ISC01)); 
+		EICRA |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
+#else	
 		MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
 		MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
+#endif
 	}
 }
 
