@@ -34,15 +34,15 @@ static volatile uint8_t *kb_inPtr, *kb_outPtr, *kb_endPtr;
 #define KB_SET_PARITY_BIT(a, b) (a |= (b << 1))
 #define KB_SET_STOP_BIT(a, b) (a |= (b << 2))
 
-void ps2_dumb_print(uint8_t *code);
+void ps2_dumb_print(uint8_t *code, uint8_t count);
 
-void static (*keypress_callback)(uint8_t *code) = ps2_dumb_print;
+void static (*keypress_callback)(uint8_t *code, uint8_t count) = ps2_dumb_print;
 static volatile uint8_t kb_data, kb_flag;
 
 int kb_parity_check(uint8_t kb_flag_i, uint8_t kb_data_i);
 void kb_pushScancode(uint8_t code);
 
-void ps2_dumb_print(uint8_t *code) {
+void ps2_dumb_print(uint8_t *code, uint8_t count) {
 	printf("%.2X %.2X %.2X\n", code[0], code[1], code[2]);
 }
 
@@ -127,14 +127,14 @@ void kb_pushScancode(uint8_t code) {
 			cur++;
 			break;
 		default:
-			(*keypress_callback)(code_array);
+			(*keypress_callback)(code_array, cur);
 			cur = 0;
 			code_array[0] = code_array[1] = code_array[2] = 0;
 			break;
 	}
 }
 
-void ps2keyb_setCallback(void (*callback)(uint8_t *code)) {
+void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count)) {
 	keypress_callback = callback;
 }
 

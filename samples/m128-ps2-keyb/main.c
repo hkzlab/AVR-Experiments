@@ -7,8 +7,12 @@
 
 #include "uart.h"
 #include "ps2_keyb.h"
+#include "ps2_proto.h"
+
+#include "ps2_converter.h"
 
 #include "main.h"
+
 
 int main(void) {
 	// Initialize serial port for output
@@ -18,6 +22,7 @@ int main(void) {
 
 	printf("INIT!\n");
 	ps2keyb_init(&PORTD, &DDRD, &PIND, 1);
+	ps2keyb_setCallback(ps2k_callback);
 
 	sei();
 

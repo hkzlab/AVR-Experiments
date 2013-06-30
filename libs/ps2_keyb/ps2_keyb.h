@@ -7,5 +7,6 @@
 
 // Data port can be set at will
 void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatile uint8_t *dataPin, uint8_t pNum);
+void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count));
 
 #endif /* _AVR_PS2_KEYB_HEADER_ */
