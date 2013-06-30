@@ -9,12 +9,7 @@
 
 /* http://www.cs.mun.ca/~rod/Winter2007/4723/notes/serial/serial.html */
 
-
-// token pasting
-#define token_paste2_int(x, y) x ## y
-#define token_paste2(x, y) token_paste2_int(x, y)
-#define token_paste3_int(x, y, z) x ## y ## z
-#define token_paste3(x, y, z) token_paste3_int(x, y, z)
+#include "common/defines.h"
 
 #if defined(__SECOND_UART__)
 #define UART_NUMBER 1
