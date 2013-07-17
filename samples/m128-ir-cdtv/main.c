@@ -30,6 +30,8 @@ int main(void) {
 
 	printf("INIT!\n");
 
+	DDRA = 0xFF; // Port A as output
+
 	DDRB = 0x00; // Disable DDRB
 	setup_PWM();
    
@@ -38,7 +40,7 @@ int main(void) {
 
 	while(1) {
 		_delay_ms(5000);
-		ir_send_command(13);
+		ir_send_command(19);
 	}
 
 	return 0;
@@ -70,10 +72,11 @@ void ir_pulse(void) {
 }
 
 void ir_pause(uint8_t long_pause) {
-	if (long_pause)
+	if (long_pause) {
 		_delay_us(IR_LONG_PULSE);
-	else
+	} else {
 		_delay_us(IR_SHORT_PULSE);
+	}
 }
 
 
@@ -87,23 +90,28 @@ void ir_begin(void) {
 
 void ir_send_command(uint8_t idx) {
 	uint16_t command = pgm_read_word(&cdtv_ir_table[idx]);
-	uint8_t counter;
+	int8_t counter;
+
+	PORTA = 0x01;
 
 	// Begin...
 	ir_begin();
 
-	for (counter = 0; counter < 12; counter++) {
+	for (counter = 11; counter >= 0; counter--) {
 		ir_pulse();
-		ir_pause((command << counter) & 0x8000);
+		ir_pause((command >> (counter + 4)) & 1);
 	}
 
-	// Resend the command again, inverting the bits
 	command = ~command;
-	for (counter = 0; counter < 12; counter++) {
+
+	// Resend the command again, inverting the bits
+	for (counter = 11; counter >= 0; counter--) {
 		ir_pulse();
-		ir_pause((command << counter) & 0x8000);
+		ir_pause((command >> (counter + 4)) & 1);
 	}
 
 	// End pulse
 	ir_pulse();
+
+	PORTA = 0x00;
 }
