@@ -8,6 +8,8 @@
 #include "uart.h"
 #include "main.h"
 
+#include "cdtv_commands.h"
+
 void ir_pulse() {
 	DDRB = 0xFF;
 	_delay_us(400);
