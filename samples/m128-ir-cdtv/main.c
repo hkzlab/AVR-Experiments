@@ -10,140 +10,17 @@
 
 #include "cdtv_commands.h"
 
-void ir_pulse() {
-	DDRB = 0xFF;
-	_delay_us(400);
-	DDRB = 0x00;
-}
+#define IR_SHORT_PULSE 400 // uS
+#define IR_LONG_PULSE 1200 // uS
 
-void ir_shortpause() {
-	_delay_us(400);
-}
+#define IR_BEGIN_PAUSE 4500 // uS
+#define IR_BEGIN_PULSE 9 // mS
 
-void ir_longpause() {
-	_delay_us(1200);
-}
-
-void send_test() {
-	DDRB = 0xFF;
-	_delay_ms(9);
-	DDRB = 0x00;
-	_delay_us(4500);
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-		// S
-	ir_pulse();
-	ir_shortpause();
-
-		// S
-	ir_pulse();
-	ir_shortpause();
-
-	// ----
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-	// ----
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-	// INVERT
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// ----
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// ----
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-	// S
-	ir_pulse();
-	ir_shortpause();
-
-	// L
-	ir_pulse();
-	ir_longpause();
-
-
-	// END
-	ir_pulse();
-
-}
+void ir_begin(void);
+void ir_pulse(void);
+void ir_pause(uint8_t short_pause);
+void setup_PWM(void);
+void ir_send_command(uint8_t idx);
 
 int main(void) {
 	// Initialize serial port for output
@@ -153,41 +30,80 @@ int main(void) {
 
 	printf("INIT!\n");
 
-	DDRB = 0xFF;
-
-   // Turn off PWM while we set it up
-   TCCR1B = 0;
-   TCCR1A = 0;
-
-   // 0.0625uS for incrementing counter
-   // We need to go to 40Khz, which means 
-
-   // Setup the timer MODE 8
-   TCCR1B |= (1 << WGM13);
-   //TCCR1A |= (1 << WGM10);
-   TCCR1B |= (1 << CS10); //clock select prescaling /1
-   // Setup the Compare Output to be set to toggle mode. See pg.108 in datasheet
-   TCCR1A |= (1 << COM1A1);
-   // Set ICR1 so the output toggles at 40KHz
-   ICR1 = 200;
-   // Set the Comparator so we're at 50% duty cycle
-  // OCR1A = ICR1;
+	DDRB = 0x00; // Disable DDRB
+	setup_PWM();
    
-	OCR1A = (ICR1*25)/100;
-   
+	// Enable interrupts
 	sei(); 
 
-   uint8_t test = 0;
-   while(1) {
-	 //  test++;
-	 //  _delay_ms(100);
-	//	OCR1A = (ICR1*test)/100;
-
-	//	test = test >= 100 ? 0 : test++;
-   	send_test();
-	   _delay_ms(2000);
-   }
+	while(1) {
+		_delay_ms(5000);
+		ir_send_command(13);
+	}
 
 	return 0;
 }
 
+void setup_PWM(void) {
+ 	// Turn off PWM while we set it up
+	TCCR1B = 0;
+	TCCR1A = 0;
+	
+	// Setup the timer MODE 8
+   	TCCR1B |= (1 << WGM13);
+   	TCCR1B |= (1 << CS10); //clock select prescaling /1 (which is 0.0625uS to increment the counter at 16Mhz)
+   
+	// Clear on compare match
+	TCCR1A |= (1 << COM1A1);
+
+	// Set ICR1 so the output toggles at 40KHz
+	ICR1 = 200;
+  
+	// Set duty cycle to 25%
+	OCR1A = (ICR1*25)/100;
+}
+
+void ir_pulse(void) {
+	DDRB = 0xFF;
+	_delay_us(IR_SHORT_PULSE);
+	DDRB = 0x00;
+}
+
+void ir_pause(uint8_t long_pause) {
+	if (long_pause)
+		_delay_us(IR_LONG_PULSE);
+	else
+		_delay_us(IR_SHORT_PULSE);
+}
+
+
+void ir_begin(void) {
+	DDRB = 0xFF;
+	_delay_ms(IR_BEGIN_PULSE);
+	DDRB = 0x00;
+	_delay_us(IR_BEGIN_PAUSE);
+}
+
+
+void ir_send_command(uint8_t idx) {
+	uint16_t command = pgm_read_word(&cdtv_ir_table[idx]);
+	uint8_t counter;
+
+	// Begin...
+	ir_begin();
+
+	for (counter = 0; counter < 12; counter++) {
+		ir_pulse();
+		ir_pause((command << counter) & 0x8000);
+	}
+
+	// Resend the command again, inverting the bits
+	command = ~command;
+	for (counter = 0; counter < 12; counter++) {
+		ir_pulse();
+		ir_pause((command << counter) & 0x8000);
+	}
+
+	// End pulse
+	ir_pulse();
+}
