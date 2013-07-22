@@ -16,6 +16,8 @@
 #define IR_BEGIN_PAUSE 4500 // uS
 #define IR_BEGIN_PULSE 9 // mS
 
+#define REPEAT_TRIGGER_TIME 937 // 60 / (1000 / (F_CPU / 1024))
+
 void ir_begin(void);
 void ir_pulse(void);
 void ir_repeat(void);
@@ -39,9 +41,47 @@ int main(void) {
 	// Enable interrupts
 	sei(); 
 
+	DDRE = 0x00; // Port E as input
+	PORTE = 0xFF; // Set pullup resistor
+
+	TCCR3B |= (1 << CS32) | (1 << CS30);
+
+	uint8_t ctrl_status = 0xFF; // All released
+	uint8_t old_ctrl_status  = ctrl_status;
+
+	TCNT3 = 0;
 	while(1) {
-		_delay_ms(5000);
-		ir_send_command(19);
+		old_ctrl_status = ctrl_status;
+		ctrl_status = PINE;
+
+		if (old_ctrl_status != ctrl_status) {
+			if (~ctrl_status & 0x1) { // up
+				ir_send_command(31);
+			} else if (~ctrl_status & 0x2) { // down
+				ir_send_command(33);
+			} else if (~ctrl_status & 0x4) { // left 
+				ir_send_command(34);
+			} else if (~ctrl_status & 0x8) { // right
+				ir_send_command(32);
+			} else if ((~ctrl_status & 0x40) && (~ctrl_status & 0x80)) { // A + B
+				ir_send_command(30);
+			} else if (~ctrl_status & 0x40) { // A
+				ir_send_command(28);
+			} else if (~ctrl_status & 0x80) { // B
+				ir_send_command(29);
+			}
+			
+
+
+			TCNT3 = 0;
+		}
+
+		if (TCNT3 >= REPEAT_TRIGGER_TIME) {
+			if (ctrl_status != 0xFF)
+				ir_repeat();
+
+			TCNT3 = 0;
+		}
 	}
 
 	return 0;
@@ -81,12 +121,16 @@ void ir_pause(uint8_t long_pause) {
 }
 
 void ir_repeat(void) {
+	PORTA = 0x02;
+
 	// Sends repeat code
 	DDRB = 0xFF;
 	_delay_ms(9);
 	DDRB = 0x00;
 	_delay_us(2100);
 	ir_pulse();
+
+	PORTA = 0x00;
 }
 
 
