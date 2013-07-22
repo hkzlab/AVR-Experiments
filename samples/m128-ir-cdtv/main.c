@@ -18,6 +18,7 @@
 
 void ir_begin(void);
 void ir_pulse(void);
+void ir_repeat(void);
 void ir_pause(uint8_t short_pause);
 void setup_PWM(void);
 void ir_send_command(uint8_t idx);
@@ -77,6 +78,15 @@ void ir_pause(uint8_t long_pause) {
 	} else {
 		_delay_us(IR_SHORT_PULSE);
 	}
+}
+
+void ir_repeat(void) {
+	// Sends repeat code
+	DDRB = 0xFF;
+	_delay_ms(9);
+	DDRB = 0x00;
+	_delay_us(2100);
+	ir_pulse();
 }
 
 
