@@ -3,6 +3,6 @@
 
 #include <avr/pgmspace.h>
 
-extern const uint16_t cdtv_ir_table[35] PROGMEM;
+extern const uint16_t cdtv_ir_table[33] PROGMEM;
 
 #endif /* _CDTV_COMMANDS_HEADER_ */

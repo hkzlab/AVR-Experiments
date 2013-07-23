@@ -23,7 +23,7 @@ void ir_pulse(void);
 void ir_repeat(void);
 void ir_pause(uint8_t short_pause);
 void setup_PWM(void);
-void ir_send_command(uint8_t idx);
+void ir_send_command(uint16_t command);
 
 int main(void) {
 	// Initialize serial port for output
@@ -48,30 +48,37 @@ int main(void) {
 
 	uint8_t ctrl_status = 0xFF; // All released
 	uint8_t old_ctrl_status  = ctrl_status;
+	uint16_t ir_cmd = 0x0000;
 
 	TCNT3 = 0;
 	while(1) {
 		old_ctrl_status = ctrl_status;
 		ctrl_status = PINE;
 
-		if (old_ctrl_status != ctrl_status) {
+		if ((old_ctrl_status != ctrl_status) && (ctrl_status != 0xFF)) {
+			ir_cmd = 0x0000;
+
 			if (~ctrl_status & 0x1) { // up
-				ir_send_command(31);
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[29]);
 			} else if (~ctrl_status & 0x2) { // down
-				ir_send_command(33);
-			} else if (~ctrl_status & 0x4) { // left 
-				ir_send_command(34);
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[31]);
+			} 
+			
+			if (~ctrl_status & 0x4) { // left 
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[32]);
 			} else if (~ctrl_status & 0x8) { // right
-				ir_send_command(32);
-			} else if ((~ctrl_status & 0x40) && (~ctrl_status & 0x80)) { // A + B
-				ir_send_command(30);
-			} else if (~ctrl_status & 0x40) { // A
-				ir_send_command(28);
-			} else if (~ctrl_status & 0x80) { // B
-				ir_send_command(29);
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[30]);
+			} 
+			
+			if (~ctrl_status & 0x40) { // A
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[32]);
+			} 
+			
+			if (~ctrl_status & 0x80) { // B
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[28]);
 			}
 			
-
+			ir_send_command(ir_cmd);
 
 			TCNT3 = 0;
 		}
@@ -142,8 +149,8 @@ void ir_begin(void) {
 }
 
 
-void ir_send_command(uint8_t idx) {
-	uint16_t command = pgm_read_word(&cdtv_ir_table[idx]);
+void ir_send_command(uint16_t command) {
+//	uint16_t command = pgm_read_word(&cdtv_ir_table[idx]);
 	int8_t counter;
 
 	PORTA = 0x01;

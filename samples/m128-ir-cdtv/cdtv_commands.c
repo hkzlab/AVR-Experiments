@@ -1,7 +1,7 @@
 #include "cdtv_commands.h"
 
 // Only the first 12 most important bits are meaningful
-const uint16_t cdtv_ir_table[35] PROGMEM = {
+const uint16_t cdtv_ir_table[33] PROGMEM = {
 	0x0010, // '1'
 	0x0210, // '2'
 	0x0110, // '3'
@@ -28,7 +28,6 @@ const uint16_t cdtv_ir_table[35] PROGMEM = {
 
 	0x0800, // Mouse A
 	0x0400, // Mouse B
-	0x0C00, // Mouse A+B
 	0x0200, // Mouse UP
 	0x0040, // Mouse RIGHT
 	0x0100, // Mouse DOWN
@@ -36,7 +35,6 @@ const uint16_t cdtv_ir_table[35] PROGMEM = {
 
 	0x8800, // Joy A
 	0x8400, // Joy B
-	0x8C00, // Joy A+B
 	0x8200, // Joy UP
 	0x8040, // Joy RIGHT
 	0x8100, // Joy DOWN
