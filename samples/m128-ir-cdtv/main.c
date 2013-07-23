@@ -71,7 +71,7 @@ int main(void) {
 			} 
 			
 			if (~ctrl_status & 0x40) { // A
-				ir_cmd |= pgm_read_word(&cdtv_ir_table[32]);
+				ir_cmd |= pgm_read_word(&cdtv_ir_table[27]);
 			} 
 			
 			if (~ctrl_status & 0x80) { // B
