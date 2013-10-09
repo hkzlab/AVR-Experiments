@@ -19,7 +19,6 @@ static volatile uint8_t amikbd_synced = 0;
 static inline void amikbd_kClock(void);
 static inline void amikbd_kToggleData(uint8_t bit);
 uint8_t amikbd_kSync(void);
-void amikbd_kSendCommand(uint8_t command);
 
 void amikbd_setup(volatile uint8_t *clockPort, volatile uint8_t *clockDir, uint8_t clockPNum) {
 	dPort = &PORTD;
@@ -79,6 +78,11 @@ static inline void amikbd_kClock(void) {
 	_delay_us(20);
 }
 
+void amikbd_kForceReset(void) {
+	*cPort &= ~(1 << cPNum); // Pull the clock line low!
+	_delay_us(500);
+	*cPort |= (1 << cPNum); // Pull the clock line high!	
+}
 
 static inline void amikbd_kToggleData(uint8_t bit) {
 	if (bit)
