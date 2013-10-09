@@ -1,0 +1,4 @@
+#ifndef _AMIGA_KEYBOARD_HEADER_
+#define _AMIGA_KEYBOARD_HEADER_
+
+#endif /* _AMIGA_KEYBOARD_HEADER_ */

@@ -10,6 +10,9 @@
 // Amiga scancodes
 // http://lxr.free-electrons.com/source/drivers/input/keyboard/amikbd.c
 
+// Inspiration...
+// https://github.com/ali1234/avr-amiga-controller
+
 const uint8_t ps2_normal_convtable[256] PROGMEM = {
 	0x00, // 00 
 	0x58, // 01 - F9
