@@ -4,26 +4,32 @@
 
 #include <avr/pgmspace.h>
 
+// PS2 scancodes
+// http://www.computer-engineering.org/ps2keyboard/scancodes2.html
+
+// Amiga scancodes
+// http://lxr.free-electrons.com/source/drivers/input/keyboard/amikbd.c
+
 const uint8_t ps2_normal_convtable[256] PROGMEM = {
 	0x00, // 00 
 	0x58, // 01 - F9
 	0x00, // 02 
-	0x00, // 03 - F5
+	0x54, // 03 - F5
 	0x52, // 04 - F3
 	0x50, // 05 - F1
 	0x51, // 06 - F2
-	0x00, // 07 - F12
+	0x00, // 07 - F12 --- Not present in Amiga
 	0x00, // 08
-	0x00, // 09 - F10
-	0x00, // 0A - F8
-	0x00, // 0B - F6
-	0x00, // 0C - F4
-	0x00, // 0D - 'TAB'
+	0x59, // 09 - F10
+	0x57, // 0A - F8
+	0x55, // 0B - F6
+	0x53, // 0C - F4
+	0x42, // 0D - 'TAB'
 	0x00, // 0E - '`'
 	0x00, // 0F
 	0x00, // 10
-	0x00, // 11 - 'LEFT ALT'
-	0x00, // 12 - 'LEFT SHIFT'
+	0x64, // 11 - 'LEFT ALT'
+	0x60, // 12 - 'LEFT SHIFT'
 	0x00, // 13
 	0x00, // 14 - 'LEFT CTRL'
 	0x00, // 15 - 'Q'
