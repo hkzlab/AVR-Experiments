@@ -9,6 +9,8 @@
 #include "ps2_keyb.h"
 #include "ps2_proto.h"
 
+#include "amiga_keyb.h"
+
 #include "ps2_converter.h"
 
 #include "main.h"
@@ -21,10 +23,18 @@ int main(void) {
 	stdin  = &uart_input;
 
 	printf("INIT!\n");
-	ps2keyb_init(&PORTD, &DDRD, &PIND, 1);
+
+	amikbd_setup(&PORTC, &DDRC, 0);
+
+//	ps2keyb_init(&PORTD, &DDRD, &PIND, 1);
+	ps2keyb_init(&PORTC, &DDRC, &PINC, 1);
 	ps2keyb_setCallback(ps2k_callback);
 
 	sei();
+
+	amikbd_init();
+
+	printf("Initialization completed...\n");
 
 	 while(1);
 

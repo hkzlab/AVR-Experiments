@@ -89,6 +89,7 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 #if defined (__AVR_ATmega128__)
 	EICRA &= ~((1 << ISC00) | (1 << ISC01)); 
 	EICRA |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
+	EIMSK |= (1 << INT0);
 #else	
 	MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
 	MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
