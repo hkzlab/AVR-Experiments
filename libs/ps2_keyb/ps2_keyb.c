@@ -117,7 +117,7 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 }
 
 void kb_pushScancode(uint8_t code) {
-	static uint8_t code_array[3];
+	static uint8_t code_array[9];
 	static uint8_t cur = 0;
 
 	code_array[cur] = code;
@@ -125,12 +125,25 @@ void kb_pushScancode(uint8_t code) {
 	switch (code) {
 		case PS2_SCANCODE_RELEASE: // Key released, expect at least another code!
 		case PS2_SCANCODE_EXTENDED: // Extended scancode, one or two more!
+		case PS2_SCANCODE_PAUSE: // Pause ...
 			cur++;
 			break;
 		default:
+			// Manage pause and printscreen
+			if (((code_array[0] == PS2_SCANCODE_EXTENDED) && (code_array[1] == 0x12) && (code_array[3] != 0x7C)) ||
+				((code_array[0] == PS2_SCANCODE_EXTENDED) && (code_array[1] == 0xF0) && (code_array[2] == 0x7C) && (code_array[5] != 0x12)) ||
+				(code_array[0] == PS2_SCANCODE_PAUSE && cur < 7)) {
+				cur++;
+				break;
+			}
+
 			(*keypress_callback)(code_array, cur);
+
 			cur = 0;
 			code_array[0] = code_array[1] = code_array[2] = 0;
+			code_array[3] = code_array[4] = code_array[5] = 0;
+			code_array[6] = code_array[7] = code_array[8] = 0;
+
 			break;
 	}
 }
