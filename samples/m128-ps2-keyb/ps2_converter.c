@@ -1,8 +1,9 @@
 #include "ps2_converter.h"
 
 #include <stdio.h>
-
 #include <avr/pgmspace.h>
+
+#include "amiga_keyb.h"
 
 // PS2 scancodes
 // http://www.computer-engineering.org/ps2keyboard/scancodes2.html
@@ -550,8 +551,12 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 
 	if (amiga_scancode == 0xFE) {
 		printf("RESET!!!\n");
+
+		amikbd_kForceReset();
 	} else if ((amiga_scancode != old_amiga_scancode) && (amiga_scancode != 0xFF)) {
 		printf("AMIGA %.2X\n", amiga_scancode);
+
+		amikbd_kSendCommand(amiga_scancode);
 	}
 
 	old_amiga_scancode = amiga_scancode;
