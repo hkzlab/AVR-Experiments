@@ -375,19 +375,19 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 	0x00, // 66
 	0x00, // 67
 	0x00, // 68
-	0x00, // 69 - 'END'
+	0x00, // 69 - 'END' // *** Use it as reset button???
 	0x00, // 6A
-	0x00, // 6B - 'LEFT ARROW'
-	0x00, // 6C - 'HOME'
+	0x4F, // 6B - 'LEFT ARROW'
+	0x5F, // 6C - 'HOME' // Used as HELP button
 	0x00, // 6D
 	0x00, // 6E
 	0x00, // 6F
 	0x00, // 70 - 'INSERT'
 	0x00, // 71 - 'DELETE'
-	0x00, // 72 - 'DOWN ARROW'
+	0x4D, // 72 - 'DOWN ARROW'
 	0x00, // 73
-	0x00, // 74 - 'RIGHT ARROW'
-	0x00, // 75 - 'UP ARROW'
+	0x4E, // 74 - 'RIGHT ARROW'
+	0x4C, // 75 - 'UP ARROW'
 	0x00, // 76
 	0x00, // 77
 	0x00, // 78
