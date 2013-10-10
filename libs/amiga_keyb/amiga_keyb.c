@@ -80,7 +80,7 @@ static inline void amikbd_kClock(void) {
 
 void amikbd_kForceReset(void) {
 	*cPort &= ~(1 << cPNum); // Pull the clock line low!
-	_delay_us(500);
+	_delay_ms(600);
 	*cPort |= (1 << cPNum); // Pull the clock line high!	
 }
 

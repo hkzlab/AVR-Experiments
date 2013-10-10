@@ -550,11 +550,11 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 	}
 
 	if (amiga_scancode == 0xFE) {
-		printf("RESET!!!\n");
+//		printf("RESET!!!\n");
 
 		amikbd_kForceReset();
 	} else if ((amiga_scancode != old_amiga_scancode) && (amiga_scancode != 0xFF)) {
-		printf("AMIGA %.2X\n", amiga_scancode);
+//		printf("AMIGA %.2X\n", amiga_scancode);
 
 		amikbd_kSendCommand(amiga_scancode);
 	}
