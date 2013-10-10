@@ -191,10 +191,9 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 # Type: avrdude -c ?
 # to get a full listing.
 #
-#AVRDUDE_PROGRAMMER = stk500v2
-AVRDUDE_PROGRAMMER = avr109
+AVRDUDE_PROGRAMMER = avrisp2
 
-AVRDUDE_WRITE_FLASH = -D -U flash:w:$(TARGET).hex
+AVRDUDE_WRITE_FLASH = -D -U flash:w:$(TARGET).hex -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -e
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 
 
@@ -212,9 +211,8 @@ AVRDUDE_WRITE_FLASH = -D -U flash:w:$(TARGET).hex
 # to submit bug reports.
 #AVRDUDE_VERBOSE = -v -v
 
-#AVRDUDE_PORT=/dev/cu.usbmodem431
-AVRDUDE_PORT=/dev/cu.usbserial
-AVRDUDE_FLAGS = -p m128 -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -B2 -b115200
+AVRDUDE_PORT=/dev/cu.usbmodem431
+AVRDUDE_FLAGS = -p m328p -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -B2 
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
