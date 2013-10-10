@@ -71,7 +71,7 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	cDir = &DDRD;
 #if defined (__AVR_ATmega128__)
 	cPNum = 0; // PD0
-#else
+#elif defined (__AVR_ATtiny4313__) || defined (__AVR_ATmega328P__)
 	cPNum = 2; // PD2
 #endif
 
@@ -86,11 +86,11 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	// See http://www.avr-tutorials.com/interrupts/The-AVR-8-Bits-Microcontrollers-External-Interrupts
 	// And http://www.atmel.com/images/doc2543.pdf
 
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 	EICRA &= ~((1 << ISC00) | (1 << ISC01)); 
 	EICRA |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
 	EIMSK |= (1 << INT0);
-#else	
+#elif defined (__AVR_ATtiny4313__)
 	MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
 	MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
 #endif
@@ -109,9 +109,9 @@ void ps2keyb_init(volatile uint8_t *dataPort, volatile uint8_t *dataDir, volatil
 	kb_endPtr = kb_inPtr + KEY_BUF_SIZE;
 
 	// Enable INT0
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 	EIMSK |= (1 << INT0);
-#else
+#elif defined (__AVR_ATtiny4313__)
 	GIMSK |= (1 << INT0);
 #endif
 }
@@ -174,9 +174,9 @@ ISR(INT0_vect) { // Manage INT0
 		}
 		clock_edge = KB_CLOCK_RISE;			// Ready for rising edge.
 
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 		EICRA |= ((1 << ISC00) | (1 << ISC01)); // Setup INT0 for rising edge.
-#else
+#elif defined (__AVR_ATtiny4313__)
 		MCUCR |= ((1 << ISC00) | (1 << ISC01)); // Setup INT0 for rising edge.
 #endif
 	} else { // Rising edge
@@ -192,10 +192,10 @@ ISR(INT0_vect) { // Manage INT0
 		}
 		clock_edge = KB_CLOCK_FALL;		// Setup routine the next falling edge.
 
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 		EICRA &= ~((1 << ISC00) | (1 << ISC01)); 
 		EICRA |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
-#else	
+#elif defined (__AVR_ATtiny4313__)
 		MCUCR &= ~((1 << ISC00) | (1 << ISC01)); 
 		MCUCR |= (1 << ISC01);  // Trigger interrupt at FALLING EDGE (INT0)
 #endif
