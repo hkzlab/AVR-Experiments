@@ -9,6 +9,7 @@
 #define AMI_KBDCODE_SELFTESTFAILED 0xFC
 #define AMI_KBDCODE_INITKEYSTREAM  0xFD
 #define AMI_KBDCODE_ENDKEYSTREAM   0xFE
+#define AMI_KBDCODE_LOSTSYNC       0xF9
 
 // Data port
 static volatile uint8_t *dPort, *dDir;
