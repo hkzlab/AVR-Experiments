@@ -14,6 +14,9 @@
 // Inspiration...
 // https://github.com/ali1234/avr-amiga-controller
 
+#define AMIGA_RESET_CODE 0xFE // This is an 'artificial' code that is not used by normal keypresses. We use it to ask for an amiga reset
+#define AMIGA_CAPSLOCK_CODE 0x62 // This is used to manage the difference between PS/2 capslock and the amiga version
+
 const uint8_t ps2_normal_convtable[256] PROGMEM = {
 	0xFF, // 00 
 	0x58, // 01 - F9
@@ -103,9 +106,9 @@ const uint8_t ps2_normal_convtable[256] PROGMEM = {
 	0x0C, // 55 - '='
 	0xFF, // 56
 	0xFF, // 57
-	0x62, // 58 - 'CAPS'
-	0x61, // 59 - 'RIGHT SHIFT'
-	0x44, // 5A - 'ENTER'
+	AMIGA_CAPSLOCK_CODE, // 58 - CAPSLOCK
+	0x61, // 59 - RIGHT SHIFT
+	0x44, // 5A - ENTER
 	0x1B, // 5B - ']'
 	0xFF, // 5C
 	0x0D, // 5D - '\'
@@ -379,7 +382,7 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 	0xFF, // 66
 	0xFF, // 67
 	0xFF, // 68
-	0xFE, // 69 - 'END' // *** Use it as reset button???
+	AMIGA_RESET_CODE, // 69 - 'END' // *** Use it as reset button???
 	0xFF, // 6A
 	0x4F, // 6B - 'LEFT ARROW'
 	0x5F, // 6C - 'HOME' // Used as HELP button
@@ -534,6 +537,8 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 
 void ps2k_callback(uint8_t *code, uint8_t count) {
 	static uint8_t old_amiga_scancode = 0xFF;
+	static uint8_t amiga_capslock_pressed = 0;
+
 	uint8_t amiga_scancode = 0;
 
 	if (count == 0) { // Normal key pressed
@@ -549,16 +554,21 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 		return;
 	}
 
-	if (amiga_scancode == 0xFE) {
-//		printf("RESET!!!\n");
-
-		amikbd_kForceReset();
+	if (amiga_scancode == AMIGA_RESET_CODE) {
+		amikbd_kForceReset(); // Force a reset on the Amiga
 	} else if ((amiga_scancode != old_amiga_scancode) && (amiga_scancode != 0xFF)) {
-//		printf("AMIGA %.2X\n", amiga_scancode);
-
-		amikbd_kSendCommand(amiga_scancode);
+		if (amiga_scancode == AMIGA_CAPSLOCK_CODE) { // We need to manage the capslock differently: on the amiga it remains pressed until someone pushes it again
+			if (!amiga_capslock_pressed) { // The capslock wasn't pressed. Treat the key normally
+				amiga_capslock_pressed = 1;
+				amikbd_kSendCommand(AMIGA_CAPSLOCK_CODE);
+			} else { // Release the capslock
+				amiga_capslock_pressed = 0;
+				amikbd_kSendCommand(AMIGA_CAPSLOCK_CODE | 0x80);
+			}
+		} else if (amiga_scancode != (AMIGA_CAPSLOCK_CODE | 0x80)) { // Every other key, except the capslock release, which we ignore
+			amikbd_kSendCommand(amiga_scancode);
+		}
 	}
 
 	old_amiga_scancode = amiga_scancode;
-//	printf("PS2   %.2X %.2X %.2X\n", code[0], code[1], code[2]);
 }
