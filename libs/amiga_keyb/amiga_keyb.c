@@ -6,13 +6,17 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
+#define AMI_KBDCODE_SELFTESTFAILED 0xFC
+#define AMI_KBDCODE_INITKEYSTREAM  0xFD
+#define AMI_KBDCODE_ENDKEYSTREAM   0xFE
+
 // Data port
 static volatile uint8_t *dPort, *dDir;
-static volatile uint8_t dPNum; // Data port pin (leg) number
+static volatile uint8_t dPNum; // Data port pin number
 
 // Clock port
 static volatile uint8_t *cPort, *cDir;
-static volatile uint8_t cPNum;
+static volatile uint8_t cPNum; // Clock port pin number
 
 static volatile uint8_t amikbd_synced = 0;
 
@@ -58,13 +62,19 @@ void amikbd_setup(volatile uint8_t *clockPort, volatile uint8_t *clockDir, uint8
 #endif
 }
 
+// http://amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node0177.html#line46
 void amikbd_init(void) {
 	amikbd_kSync();
 
-	// Send initialization command
-	amikbd_kSendCommand(0xFD);
-	amikbd_kSendCommand(0xFE);
-	amikbd_kSendCommand(0x35);
+	// We should send the test failed code here, if any problem is detected
+
+	// Send initializate powerup key stream
+	amikbd_kSendCommand(AMI_KBDCODE_INITKEYSTREAM);
+	// Here we should send the keycodes for all the "pressed" keyboard keys...
+	// But I will simply suppose there is none
+
+	amikbd_kSendCommand(AMI_KBDCODE_ENDKEYSTREAM);
+	//amikbd_kSendCommand(0x35); // FIXME: Useless?
 
 }
 
