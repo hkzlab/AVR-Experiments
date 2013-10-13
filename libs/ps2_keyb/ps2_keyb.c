@@ -157,6 +157,10 @@ void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count)) {
 	keypress_callback = callback;
 }
 
+void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
+	// Send host-to-device command...
+}
+
 ISR(INT0_vect) { // Manage INT0
 	uint8_t kBit = 0;
 
