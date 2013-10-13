@@ -3,6 +3,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 
 #include <stdio.h>
 
@@ -158,6 +159,10 @@ void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count)) {
 }
 
 void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
+	uint8_t timeout_counter = 0;
+	uint8_t cur_data = 0;
+	uint8_t parity_check;
+
 	// Send host-to-device command...
 
 	cli(); // Disable all interrupts in preparation to command sending
@@ -178,10 +183,57 @@ void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
 		*cPort |= (1 << cPNum); // Pull-up resistor on clock line
 
 		// And wait for the device to bring it low
-		while (*cPin & (1 << cPNum));
+		timeout_counter = 20;
+		while (*cPin & (1 << cPNum) && timeout_counter--) _delay_ms(1);
+		if (!timeout_counter) break; // Problem waiting for the clock port response!
 
 		// Now begin send the data bits...
+		cur_data = command[idx];
+		parity_check = 1;
+		for (uint8_t bit_idx = 0; bit_idx < 8; bit_idx++) {
+			if (cur_data & 0x01) { 
+				*dPort |= (1 << dPNum);
+				parity_check = !parity_check;
+			} else {
+				*dPort &= ~(1 << dPNum);
+			}
+
+			cur_data >>= 1;
+			
+			// Wait for the device to bring the clock high and then low
+			while (!(*cPin & (1 << cPNum)));
+			while (*cPin & (1 << cPNum));
+		}
+
+		// Send the parity bit
+		if (parity_check)
+			*dPort |= (1 << dPNum);
+		else
+			*dPort &= ~(1 << dPNum);
+
+		// Wait for the device to bring the clock high and then low
+		while (!(*cPin & (1 << cPNum)));
+		while (*cPin & (1 << cPNum));
+
+		// Release the data line and set it as input
+		*dDir &= ~(1 << dPNum); // KB Data line set as input
+		*dPort |= (1 << dPNum); // Pull-up resistor on data line
+		
+		// Wait for the device to bring the data line low
+		while (*dPin & (1 << dPNum));
+		// Wait for the device to bring the device clock low
+		while (*cPin & (1 << cPNum));
+
+		_delay_us(100);
 	}
+
+	// Prepare data port
+	*dDir &= ~(1 << dPNum); // KB Data line set as input
+	*dPort |= (1 << dPNum); // Pull-up resistor on data line
+
+	// Prepare clock port
+	*cDir &= ~(1 << cPNum); // KB Clock line set as input
+	*cPort |= (1 << cPNum); // Pull-up resistor on clock line
 
 	sei();
 }
