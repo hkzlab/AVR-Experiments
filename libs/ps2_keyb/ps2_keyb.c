@@ -6,6 +6,11 @@
 
 #include <stdio.h>
 
+// See the following link for details on PS/2 protocol
+// http://www.computer-engineering.org/ps2protocol/
+// See the following link for details on the keyboard PS/2 commands
+// http://www.computer-engineering.org/ps2keyboard/
+
 // Data port
 static volatile uint8_t *dPort, *dPin, *dDir;
 static volatile uint8_t dPNum; // Data port pin (leg) number
@@ -152,7 +157,6 @@ void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count)) {
 	keypress_callback = callback;
 }
 
-// See http://www.computer-engineering.org/ps2protocol/
 ISR(INT0_vect) { // Manage INT0
 	uint8_t kBit = 0;
 
