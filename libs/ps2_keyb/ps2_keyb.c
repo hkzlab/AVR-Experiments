@@ -159,6 +159,31 @@ void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count)) {
 
 void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
 	// Send host-to-device command...
+
+	cli(); // Disable all interrupts in preparation to command sending
+
+	// Iterate over all the data bytes we have to send
+	for (uint8_t idx = 0; idx < length; idx++) {
+		// Bring the clock line LOW for at least 100 microseconds
+		*cDir |= (1 << cPNum); // KB Clock line set as output
+		*cPort &= ~(1 << cPNum); // bring line LOW
+		_delay_us(100);
+
+		// Apply a request-to-send by bringing data line low
+		*dDir |= (1 << dPNum); // KB Data line set as output
+		*dPort &= ~(1 << dPNum); // Bring line LOW
+
+		// Release the clock port ... 
+		*cDir &= ~(1 << cPNum); // KB Clock line set as input
+		*cPort |= (1 << cPNum); // Pull-up resistor on clock line
+
+		// And wait for the device to bring it low
+		while (*cPin & (1 << cPNum));
+
+		// Now begin send the data bits...
+	}
+
+	sei();
 }
 
 ISR(INT0_vect) { // Manage INT0
