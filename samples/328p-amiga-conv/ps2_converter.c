@@ -563,6 +563,7 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 				
 		ps2_led_command[0] = 0xFF; // Reset the keyboard
 		ps2keyb_sendCommand(ps2_led_command, 1);
+		amiga_capslock_pressed = 0;
 	} else if ((amiga_scancode != old_amiga_scancode) && (amiga_scancode != 0xFF)) {
 		if (amiga_scancode == AMIGA_CAPSLOCK_CODE) { // We need to manage the capslock differently: on the amiga it remains pressed until someone pushes it again
 			if (!amiga_capslock_pressed) { // The capslock wasn't pressed. Treat the key normally
