@@ -158,8 +158,8 @@ void ps2keyb_setCallback(void (*callback)(uint8_t *code, uint8_t count)) {
 	keypress_callback = callback;
 }
 
+// See http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=134386
 void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
-	uint8_t timeout_counter = 0;
 	uint8_t cur_data = 0;
 	uint8_t parity_check;
 
@@ -171,31 +171,35 @@ void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
 	for (uint8_t idx = 0; idx < length; idx++) {
 		// Bring the clock line LOW for at least 100 microseconds
 		*cDir |= (1 << cPNum); // KB Clock line set as output
-		*cPort &= ~(1 << cPNum); // bring line LOW
+		*dDir |= (1 << dPNum); // KB Data line set as output
+
+		*cPort &= ~(1 << cPNum); // bring clock line LOW
 		_delay_us(100);
 
 		// Apply a request-to-send by bringing data line low
-		*dDir |= (1 << dPNum); // KB Data line set as output
-		*dPort &= ~(1 << dPNum); // Bring line LOW
+		*dPort &= ~(1 << dPNum); // Bring data line LOW
 
-		// Release the clock port ... 
+		// Release the clock port (set it to floating and give control back)
+		*cPort |= (1 << cPNum); // bring clock line HIGH
 		*cDir &= ~(1 << cPNum); // KB Clock line set as input
 		*cPort |= (1 << cPNum); // Pull-up resistor on clock line
 
-		// And wait for the device to bring it low
-		timeout_counter = 20;
-		while (*cPin & (1 << cPNum) && timeout_counter--) _delay_ms(1);
-		if (!timeout_counter) break; // Problem waiting for the clock port response!
+		// And wait for the device to bring clock line LOW
+		while (*cPin & (1 << cPNum));
 
 		// Now begin send the data bits...
 		cur_data = command[idx];
 		parity_check = 1;
 		for (uint8_t bit_idx = 0; bit_idx < 8; bit_idx++) {
-			if (cur_data & 0x01) { 
-				*dPort |= (1 << dPNum);
-				parity_check = !parity_check;
+			if (cur_data & 0x01) {  // Set the line to floating with pullup
+				*dDir &= ~(1 << dPNum); // KB Data line set as input
+				*dPort |= (1 << dPNum); // Pull-up resistor on data line
+
+				if (!parity_check) parity_check = 1;
+				else parity_check = 0;
 			} else {
-				*dPort &= ~(1 << dPNum);
+				*dDir |= (1 << dPNum); // KB Data line set as output
+				*dPort &= ~(1 << dPNum); // Force it low
 			}
 
 			cur_data >>= 1;
@@ -206,25 +210,40 @@ void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
 		}
 
 		// Send the parity bit
-		if (parity_check)
-			*dPort |= (1 << dPNum);
-		else
-			*dPort &= ~(1 << dPNum);
-
+		if (parity_check) {
+			*dDir &= ~(1 << dPNum); // Force the line as floating again
+			*dPort |= (1 << dPNum); // Pull-up resistor on data line
+		} else {
+			*dDir |= (1 << dPNum); // KB Data line set as output
+			*dPort &= ~(1 << dPNum); // And force it low
+		}
 		// Wait for the device to bring the clock high and then low
 		while (!(*cPin & (1 << cPNum)));
 		while (*cPin & (1 << cPNum));
 
-		// Release the data line and set it as input
+		// Parity sent, now set the data high (floating)
 		*dDir &= ~(1 << dPNum); // KB Data line set as input
 		*dPort |= (1 << dPNum); // Pull-up resistor on data line
 		
-		// Wait for the device to bring the data line low
-		while (*dPin & (1 << dPNum));
-		// Wait for the device to bring the device clock low
+		// Wait for the device to bring the clock high and then low
+		while (!(*cPin & (1 << cPNum)));
 		while (*cPin & (1 << cPNum));
+		
+		// Set the data line low
+		*dDir |= (1 << dPNum); // KB Data line set as output
+		*dPort &= ~(1 << dPNum); // Pull the line low
+		
+		*dDir &= ~(1 << dPNum); // KB Data line set as input
+		
+		// Wait for clock line to get high
+		while (!(*cPin & (1 << cPNum)));
+		while (*cPin & (1 << cPNum)); // Then low
+		while (!(*cPin & (1 << cPNum))); // Then high
 
-		_delay_us(100);
+		// Wait for the data line to get high
+		while (!(*dPin & (1 << dPNum)));
+
+		_delay_ms(15); // Wait for the device to be ready again
 	}
 
 	// Prepare data port

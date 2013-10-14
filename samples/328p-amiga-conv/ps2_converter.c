@@ -5,6 +5,9 @@
 
 #include "amiga_keyb.h"
 
+#include "ps2_proto.h"
+#include "ps2_keyb.h"
+
 // PS2 scancodes
 // http://www.computer-engineering.org/ps2keyboard/scancodes2.html
 
@@ -540,6 +543,7 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 	static uint8_t amiga_capslock_pressed = 0;
 
 	uint8_t amiga_scancode = 0;
+	uint8_t ps2_led_command[] = {PS2_HTD_LEDCONTROL, 0x00};
 
 	if (count == 0) { // Normal key pressed
 		amiga_scancode = pgm_read_byte(&ps2_normal_convtable[code[0]]);
@@ -561,9 +565,15 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 			if (!amiga_capslock_pressed) { // The capslock wasn't pressed. Treat the key normally
 				amiga_capslock_pressed = 1;
 				amikbd_kSendCommand(AMIGA_CAPSLOCK_CODE);
+
+				ps2_led_command[1] = 0x04; // Turn ON caps lock led
+				ps2keyb_sendCommand(ps2_led_command, 2);
 			} else { // Release the capslock
 				amiga_capslock_pressed = 0;
 				amikbd_kSendCommand(AMIGA_CAPSLOCK_CODE | 0x80);
+
+				ps2_led_command[1] = 0x00; // Turn OFF caps lock led
+				ps2keyb_sendCommand(ps2_led_command, 2);
 			}
 		} else if (amiga_scancode != (AMIGA_CAPSLOCK_CODE | 0x80)) { // Every other key, except the capslock release, which we ignore
 			amikbd_kSendCommand(amiga_scancode);
