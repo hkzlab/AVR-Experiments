@@ -539,7 +539,7 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 };
 
 void ps2k_callback(uint8_t *code, uint8_t count) {
-//	static uint8_t old_amiga_scancode = 0xFF;
+	static uint8_t old_amiga_scancode = 0xFF;
 	static uint8_t amiga_capslock_pressed = 0;
 
 	uint8_t amiga_scancode = 0;
@@ -554,13 +554,13 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 	} else if (count == 2) { // Extended key depressed
 		amiga_scancode = pgm_read_byte(&ps2_extended_convtable[code[2]]) | 0x80;				
 	} else {
-		//old_amiga_scancode = amiga_scancode;
+		old_amiga_scancode = amiga_scancode;
 		return;
 	}
 
 	if (amiga_scancode == AMIGA_RESET_CODE) {
 		amikbd_kForceReset(); // Force a reset on the Amiga
-	} else if (/*(amiga_scancode != old_amiga_scancode) &&*/ (amiga_scancode != 0xFF)) {
+	} else if ((amiga_scancode != old_amiga_scancode) && (amiga_scancode != 0xFF)) {
 		if (amiga_scancode == AMIGA_CAPSLOCK_CODE) { // We need to manage the capslock differently: on the amiga it remains pressed until someone pushes it again
 			if (!amiga_capslock_pressed) { // The capslock wasn't pressed. Treat the key normally
 				amiga_capslock_pressed = 1;
@@ -580,5 +580,5 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 		}
 	}
 
-//	old_amiga_scancode = amiga_scancode;
+	old_amiga_scancode = amiga_scancode;
 }

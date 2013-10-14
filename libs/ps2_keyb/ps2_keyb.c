@@ -180,7 +180,6 @@ void ps2keyb_sendCommand(uint8_t *command, uint8_t length) {
 		*dPort &= ~(1 << dPNum); // Bring data line LOW
 
 		// Release the clock port (set it to floating and give control back)
-		*cPort |= (1 << cPNum); // bring clock line HIGH
 		*cDir &= ~(1 << cPNum); // KB Clock line set as input
 		*cPort |= (1 << cPNum); // Pull-up resistor on clock line
 

@@ -14,8 +14,11 @@
 
 #include "main.h"
 
+extern volatile uint8_t cristo;
 
 int main(void) {
+	uint8_t keyb_commands[2];
+
 	// Set the pull-up resistor to all unused I/O ...
 	DDRB &= 0x03;
 	PORTB |= 0xFC;
@@ -26,7 +29,8 @@ int main(void) {
 	DDRD &= 0x0C;
 	PORTD |= 0xF3;
 
-	_delay_us(100);
+	_delay_ms(50);
+
 
 	// Initialization of PS/2 and Amiga interface
 	amikbd_setup(&PORTB, &DDRB, 0);
@@ -34,11 +38,9 @@ int main(void) {
 	ps2keyb_init(&PORTB, &DDRB, &PINB, 1);
 	ps2keyb_setCallback(ps2k_callback);
 
-	sei();
-
-	// Disable typematic break
-	uint8_t ps2_command = PS2_HTD_ALLKEYSMAKEBREAK;
-	ps2keyb_sendCommand(&ps2_command, 1);
+	// Force the keyboard reset
+	keyb_commands[0] = PS2_HTD_RESET;
+	ps2keyb_sendCommand(keyb_commands, 1); // This also enables interrupts
 
 	amikbd_init();
 

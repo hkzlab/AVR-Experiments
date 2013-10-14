@@ -116,6 +116,8 @@ static inline void amikbd_kToggleData(uint8_t bit) {
 }
 
 uint8_t amikbd_kSync(void) {
+	uint8_t retries = 0xFF;
+
 #if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 	EIMSK &= ~(1 << INT1); // Disable INT1
 #elif defined (__AVR_ATtiny4313__)
@@ -136,7 +138,7 @@ uint8_t amikbd_kSync(void) {
 
 	if (amikbd_synced) return 1; // The keyboard got synced
 
-	while (1) {
+	while (retries--) {
 #if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 		EIMSK &= ~(1 << INT1); // Disable INT1
 #elif defined (__AVR_ATtiny4313__)
@@ -167,8 +169,10 @@ uint8_t amikbd_kSync(void) {
 #endif
 		_delay_us(120);
 
-		if (amikbd_synced) return 0;
+		if (amikbd_synced) return 1;
 	}
+
+	return 0; // Sync failed
 }
 
 

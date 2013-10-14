@@ -9,5 +9,6 @@
 
 #define PS2_HTD_LEDCONTROL 0xED
 #define PS2_HTD_ALLKEYSMAKEBREAK 0xF8
+#define PS2_HTD_RESET 0xFF
 
 #endif /* _PS2_PROTO_HEADER_ */
