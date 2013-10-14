@@ -36,6 +36,10 @@ int main(void) {
 
 	sei();
 
+	// Disable typematic break
+	uint8_t ps2_command = PS2_HTD_ALLKEYSMAKEBREAK;
+	ps2keyb_sendCommand(&ps2_command, 1);
+
 	amikbd_init();
 
 	while(1);
