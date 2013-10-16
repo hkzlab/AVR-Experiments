@@ -33,7 +33,7 @@ int main(void) {
 
 
 	// Initialization of PS/2 and Amiga interface
-	amikbd_setup(&PORTB, &DDRB, 0);
+	amikbd_setup(&PORTB, &DDRB, 0, &PORTD, &DDRD, 0);
 
 	ps2keyb_init(&PORTB, &DDRB, &PINB, 1);
 	ps2keyb_setCallback(ps2k_callback);

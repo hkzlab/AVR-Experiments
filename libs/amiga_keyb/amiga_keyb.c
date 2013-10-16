@@ -19,13 +19,17 @@ static volatile uint8_t dPNum; // Data port pin number
 static volatile uint8_t *cPort, *cDir;
 static volatile uint8_t cPNum; // Clock port pin number
 
+// Reset port used by A500
+static volatile uint8_t *rPort, *rDir;
+static volatile uint8_t rPNum; // Reset port pin number
+
 static volatile uint8_t amikbd_synced = 0;
 
 static inline void amikbd_kClock(void);
 static inline void amikbd_kToggleData(uint8_t bit);
 uint8_t amikbd_kSync(void);
 
-void amikbd_setup(volatile uint8_t *clockPort, volatile uint8_t *clockDir, uint8_t clockPNum) {
+void amikbd_setup(volatile uint8_t *clockPort, volatile uint8_t *clockDir, uint8_t clockPNum, volatile uint8_t *resetPort, volatile uint8_t *resetDir, uint8_t resetPNum) {
 #if defined (__AVR_ATmega128__)
 	dPort = &PORTD;
 	dDir = &DDRD;
@@ -38,6 +42,10 @@ void amikbd_setup(volatile uint8_t *clockPort, volatile uint8_t *clockDir, uint8
 	// ???
 #endif
 
+	rPort = resetPort;
+	rDir = resetDir;
+	rPNum = resetPNum;
+
 	cPort = clockPort;
 	cDir = clockDir;
 	cPNum = clockPNum;
@@ -49,6 +57,10 @@ void amikbd_setup(volatile uint8_t *clockPort, volatile uint8_t *clockDir, uint8
 	// Prepare clock port
 	*cDir |= (1 << cPNum); // KB Clock line set as output: we are performing the timing
 	*cPort |= (1 << cPNum); // Pull the clock line high!
+
+	// Prepare reset port
+	*rDir &= ~(1 << rPNum); // KB reset line set as input
+	*rPort &= ~(1 << rPNum); // Disable pull-up resistor in reset line
 
 #if defined (__AVR_ATmega128__) || defined (__AVR_ATmega328P__)
 	EICRA &= ~((1 << ISC10) | (1 << ISC11)); // Trigger interrupt at LOW LEVEL (INT1)
@@ -101,9 +113,18 @@ static inline void amikbd_kClock(void) {
 }
 
 void amikbd_kForceReset(void) {
+	// Pull low the reset line
+	*rDir |= (1 << rPNum); // KB reset line set as output
+	*rPort &= ~(1 << rPNum); // Pull reset line low
+
+	// Send a reset signal through the clock port too...
 	*cPort &= ~(1 << cPNum); // Pull the clock line low!
 	_delay_ms(600);
-	*cPort |= (1 << cPNum); // Pull the clock line high!	
+	*cPort |= (1 << cPNum); // Pull the clock line high!
+
+	// Set reset line as floating again...
+	*rDir &= ~(1 << rPNum); // KB reset line set as input
+	*rPort &= ~(1 << rPNum); // Disable pull-up resistor in reset line
 }
 
 static inline void amikbd_kToggleData(uint8_t bit) {
