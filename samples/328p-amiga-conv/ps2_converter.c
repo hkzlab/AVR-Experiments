@@ -593,11 +593,12 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 	}
 
 	if (amiga_reset_sequence == 0xFF) { // Reset sequence completed
-		amiga_reset_sequence = 0x00;
-		amiga_scancode == AMIGA_RESET_CODE; // Force a reset!
+		amiga_scancode = AMIGA_RESET_CODE; // Force a reset!
 	}
 
 	if (amiga_scancode == AMIGA_RESET_CODE) {
+		amiga_reset_sequence = 0x00;
+		
 		amikbd_kForceReset(); // Force a reset on the Amiga
 				
 		ps2_led_command[0] = 0xFF; // Reset the keyboard
