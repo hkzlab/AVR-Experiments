@@ -194,7 +194,8 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 #AVRDUDE_PROGRAMMER = avrisp2
 AVRDUDE_PROGRAMMER = dragon_isp
 
-AVRDUDE_WRITE_FLASH = -D -U flash:w:$(TARGET).hex -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -e
+#AVRDUDE_WRITE_FLASH = -D -U flash:w:$(TARGET).hex -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m -e
+AVRDUDE_WRITE_FLASH = -D -U flash:w:$(TARGET).hex -U lfuse:w:0xe2:m -U hfuse:w:0xd9:m
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 
 

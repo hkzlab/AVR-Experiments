@@ -19,6 +19,9 @@
 
 #define AMIGA_RESET_CODE 0xFE // This is an 'artificial' code that is not used by normal keypresses. We use it to ask for an amiga reset
 #define AMIGA_CAPSLOCK_CODE 0x62 // This is used to manage the difference between PS/2 capslock and the amiga version
+#define AMIGA_LCTRL_CODE 0x63
+#define AMIGA_LGUI_CODE 0x66
+#define AMIGA_RGUI_CODE 0x67
 
 const uint8_t ps2_normal_convtable[256] PROGMEM = {
 	0xFF, // 00 
@@ -41,7 +44,7 @@ const uint8_t ps2_normal_convtable[256] PROGMEM = {
 	0x64, // 11 - 'LEFT ALT'
 	0x60, // 12 - 'LEFT SHIFT'
 	0xFF, // 13
-	0x63, // 14 - 'LEFT CTRL'
+	AMIGA_LCTRL_CODE, // 14 - 'LEFT CTRL'
 	0x10, // 15 - 'Q'
 	0x01, // 16 - '1'
 	0xFF, // 17
@@ -311,7 +314,7 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 	0xFF, // 1C
 	0xFF, // 1D
 	0xFF, // 1E
-	0x66, // 1F - 'LEFT GUI' (Windows button?)
+	AMIGA_LGUI_CODE, // 1F - 'LEFT GUI' (Windows button?)
 	0xFF, // 20
 	0xFF, // 21
 	0xFF, // 22
@@ -319,7 +322,7 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 	0xFF, // 24
 	0xFF, // 25
 	0xFF, // 26
-	0x67, // 27 - 'RIGHT GUI' (Windows button?)
+	AMIGA_RGUI_CODE, // 27 - 'RIGHT GUI' (Windows button?)
 	0xFF, // 28
 	0xFF, // 29
 	0xFF, // 2A
@@ -539,6 +542,7 @@ const uint8_t ps2_extended_convtable[256] PROGMEM = {
 };
 
 void ps2k_callback(uint8_t *code, uint8_t count) {
+	static uint8_t amiga_reset_sequence = 0x00; // This byte is used to keep track
 	static uint8_t old_amiga_scancode = 0xFF;
 	static uint8_t amiga_capslock_pressed = 0;
 
@@ -547,15 +551,50 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 
 	if (count == 0) { // Normal key pressed
 		amiga_scancode = pgm_read_byte(&ps2_normal_convtable[code[0]]);
+
+		if (amiga_scancode == AMIGA_LCTRL_CODE) { // Keep track of the key for the reset sequence
+			amiga_reset_sequence |= 0xE0;
+		}
 	} else if (count == 1 && code[0] == PS2_SCANCODE_RELEASE) { // Normal key depressed
-		amiga_scancode = pgm_read_byte(&ps2_normal_convtable[code[1]]) | 0x80;		
+		amiga_scancode = pgm_read_byte(&ps2_normal_convtable[code[1]]) | 0x80;
+
+		if (amiga_scancode == (AMIGA_LCTRL_CODE | 0x80)) { // Keep track of the key for the reset sequence
+			amiga_reset_sequence &= 0x1F;
+		}
 	} else if (count == 1 && code[0] == PS2_SCANCODE_EXTENDED) { // Extended key pressed
-		amiga_scancode = pgm_read_byte(&ps2_extended_convtable[code[1]]);		
+		amiga_scancode = pgm_read_byte(&ps2_extended_convtable[code[1]]);
+
+		switch (amiga_scancode) { // Keep track of the key for the reset sequence
+			case AMIGA_LGUI_CODE:
+				amiga_reset_sequence |= 0x1C;
+				break;
+			case AMIGA_RGUI_CODE:
+				amiga_reset_sequence |= 0x03;
+				break;
+			default:
+				break;
+		}
 	} else if (count == 2) { // Extended key depressed
 		amiga_scancode = pgm_read_byte(&ps2_extended_convtable[code[2]]) | 0x80;				
+		
+		switch (amiga_scancode) { // Keep track of the key for the reset sequence
+			case AMIGA_LGUI_CODE:
+				amiga_reset_sequence &= 0xE3;
+				break;
+			case AMIGA_RGUI_CODE:
+				amiga_reset_sequence &= 0xFC;
+				break;
+			default:
+				break;
+		}
 	} else {
 		old_amiga_scancode = amiga_scancode;
 		return;
+	}
+
+	if (amiga_reset_sequence == 0xFF) { // Reset sequence completed
+		amiga_reset_sequence = 0x00;
+		amiga_scancode == AMIGA_RESET_CODE; // Force a reset!
 	}
 
 	if (amiga_scancode == AMIGA_RESET_CODE) {
