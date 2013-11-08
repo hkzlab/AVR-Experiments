@@ -578,10 +578,10 @@ void ps2k_callback(uint8_t *code, uint8_t count) {
 		amiga_scancode = pgm_read_byte(&ps2_extended_convtable[code[2]]) | 0x80;				
 		
 		switch (amiga_scancode) { // Keep track of the key for the reset sequence
-			case AMIGA_LGUI_CODE:
+			case (AMIGA_LGUI_CODE | 0x80):
 				amiga_reset_sequence &= 0xE3;
 				break;
-			case AMIGA_RGUI_CODE:
+			case (AMIGA_RGUI_CODE | 0x80):
 				amiga_reset_sequence &= 0xFC;
 				break;
 			default:
