@@ -4,6 +4,8 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
+#include <avr/eeprom.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,6 +20,8 @@
 
 #include "owilib.h"
 #include "ds18b20.h"
+
+#define EEPROM_INIT_TOKEN 0xBEEF
 
 #define DEBOUNCE_TIME 25
 
@@ -37,8 +41,11 @@ void sys_setup(void);
 void timer_init(void);
 void get_temp(void);
 void update_lcd(void);
+void init_eeprom(void);
 
 int main(void) {
+	static uint8_t thresh_changed = 0;
+
 	sys_setup();
 
 	// First temp conversion
@@ -52,17 +59,27 @@ int main(void) {
 			temperature_thresh += 0.5f;
 			if (temperature_thresh > MAXIMUM_TEMP_THRESH) temperature_thresh = MAXIMUM_TEMP_THRESH;
 			
+			thresh_changed = 1;
+			
 			update_lcd();
 			_delay_ms(DEBOUNCE_TIME);
 		} else if (!(PIND & (1 << PD3))) {
 			temperature_thresh -= 0.5f;
 			if (temperature_thresh < MINIMUM_TEMP_THRESH) temperature_thresh = MINIMUM_TEMP_THRESH;
-			
+
+			thresh_changed = 1;
+
 			update_lcd();
 			_delay_ms(DEBOUNCE_TIME);
 		}
 
 		if (need_update) {
+			
+			if (thresh_changed) {
+				eeprom_write_float((float*)2, temperature_thresh);
+				thresh_changed = 0;
+			}
+
 			get_temp();
 			ds18b20_startTempConversion(dsconn, NULL);
 			update_lcd();
@@ -124,6 +141,18 @@ void get_temp(void) {
 	current_temperature = avg_temperature;
 }
 
+void init_eeprom(void) {
+	uint16_t cur_token = eeprom_read_word((uint16_t*)0);
+	temperature_thresh = eeprom_read_float((float*)2);
+	
+	if ((cur_token != EEPROM_INIT_TOKEN) || isnan(temperature_thresh)) { // Need to reset eeprom data
+		eeprom_write_word((uint16_t*)0, EEPROM_INIT_TOKEN);
+
+		temperature_thresh = 30.0f;
+		eeprom_write_float((float*)2, temperature_thresh);
+	}
+}
+
 void sys_setup(void) {
 	char strbuf[20];
 
@@ -133,6 +162,8 @@ void sys_setup(void) {
 	uart_init();
 	stdout = &uart_output;
 	stdin  = &uart_input;
+
+	init_eeprom();
 
 	// Led connections
 	DDRB |= (1 << PB1);
