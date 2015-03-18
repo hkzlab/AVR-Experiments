@@ -33,7 +33,7 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
-include ../328p-common.mk
+include ../328p-8-common.mk
 
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
@@ -42,7 +42,7 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/spi/spi.c
+SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/spi/spi.c ../../libs/mcp2515/mcp2515.c
 
 
 # List Assembler source files here.
@@ -92,7 +92,7 @@ CDEFS = -DF_CPU=$(F_CPU)UL
 
 
 # Place -I options here
-CINCS = -I../../libs/ -I../../libs/uart/  -I../../libs/spi/
+CINCS = -I../../libs/ -I../../libs/uart/  -I../../libs/spi/ -I../../libs/mcp2515/
 
 
 

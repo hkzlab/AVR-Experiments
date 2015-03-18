@@ -29,6 +29,9 @@ extern "C"{
 #endif
 
 // create alias for the different SPI chip pins - code assumes all on port B
+#define DDR_SPI DDRB
+#define PORT_SPI PORTB
+
 #define SPI_SS_PIN PORTB4
 #define SPI_SCK_PIN PORTB7
 #define SPI_MOSI_PIN PORTB5

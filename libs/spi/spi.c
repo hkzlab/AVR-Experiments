@@ -34,15 +34,15 @@ void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock)
 {
   // specify pin directions for SPI pins on port B
   if (clock == SPI_SLAVE) { // if slave SS and SCK is input
-    DDRB &= ~(1<<SPI_MOSI_PIN); // input
-    DDRB |= (1<<SPI_MISO_PIN); // output
-    DDRB &= ~(1<<SPI_SS_PIN); // input
-    DDRB &= ~(1<<SPI_SCK_PIN);// input
+    DDR_SPI &= ~(1<<SPI_MOSI_PIN); // input
+    DDR_SPI |= (1<<SPI_MISO_PIN); // output
+    DDR_SPI &= ~(1<<SPI_SS_PIN); // input
+    DDR_SPI &= ~(1<<SPI_SCK_PIN);// input
   } else {
-    DDRB |= (1<<SPI_MOSI_PIN); // output
-    DDRB &= ~(1<<SPI_MISO_PIN); // input
-    DDRB |= (1<<SPI_SCK_PIN);// output
-    DDRB |= (1<<SPI_SS_PIN);// output
+    DDR_SPI |= (1<<SPI_MOSI_PIN); // output
+    DDR_SPI &= ~(1<<SPI_MISO_PIN); // input
+    DDR_SPI |= (1<<SPI_SCK_PIN);// output
+    DDR_SPI |= (1<<SPI_SS_PIN);// output
   }
   SPCR = ((interrupt ? 1 : 0)<<SPIE) // interrupt enabled
     | (1<<SPE) // enable SPI
