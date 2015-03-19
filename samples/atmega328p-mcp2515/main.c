@@ -14,6 +14,7 @@
 static volatile uint8_t interrupt_received = 0;
 void (*int_handler)(void); 
 
+static void spiChipSelect(uint8_t state);
 static void extInterruptINIT(void (*handler)(void));
 static void interrupt_handler(void);
 
@@ -27,14 +28,14 @@ int main(void) {
 	sei(); // Enable interrupts
 	
 	// Setup SPI
-	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK4);
+	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK2);
 	PORT_SPI &= ~(1<<SPI_SS_PIN);
 
 
+	send_spi(MCP2515_INSTR_RESET);
 	while (1) {
 		_delay_ms(5000);		
-//		send_spi(0xC0);
-	//	fprintf(stdout, "nope %.2X\n", send_spi(0xA0));
+		fprintf(stdout, "nope %.2X\n", send_spi(MCP2515_INSTR_RXSTAT));
 	}
 
     return 0;
@@ -50,6 +51,18 @@ static void extInterruptINIT(void (*handler)(void)) {
 
 static void interrupt_handler(void) {
 	interrupt_received = 1;
+}
+
+static void spiChipSelect(uint8_t state) {
+	if(!state) {
+		/* Upper the CS pin */
+		PORT_SPI |= (1<<SPI_SS_PIN);
+		DDR_SPI |= (1<<SPI_SS_PIN);
+	} else {
+		/* Lower the CS pin */
+		PORT_SPI &= ~(1<<SPI_SS_PIN);
+		DDR_SPI |= (1<<SPI_SS_PIN);
+	}
 }
 
 /* System interrupt handler */
