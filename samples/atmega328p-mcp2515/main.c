@@ -28,9 +28,10 @@ int main(void) {
 	sei(); // Enable interrupts
 	
 	// Setup SPI
-	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK2);
+	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK4);
+
 	mcp2515_reset();
-	mcp2515_bitModify(0x0F, 0x40, 0xE0);
+	mcp2515_setMode(mcp_func_normal);
 
 	while (1) {
 		_delay_ms(1000);

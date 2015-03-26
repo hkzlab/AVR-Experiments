@@ -87,6 +87,17 @@ uint8_t mcp2515_readStatus(void) {
 	return ret_buf;
 }
 
+void mcp2515_setMode(mcp2515_func_mode mode) {
+	// Enable the chip
+	internal_spiChipSelect(1);
+	
+	mcp2515_bitModify(MCP2515_REG_CANCTRL, mode, 0xE0);
+	while((mcp2515_readRegister(MCP2515_REG_CANSTAT) & 0xE0) != mode);
+
+	// Disable the chip
+	internal_spiChipSelect(0);	
+}
+
 void mcp2515_reset(void) {
 	// Enable the chip
 	internal_spiChipSelect(1);

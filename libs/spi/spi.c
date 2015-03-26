@@ -26,8 +26,7 @@
 extern "C"{
 #endif
 
-void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock)
-{
+void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock) {
   // specify pin directions for SPI pins on port B
   if (clock == SPI_SLAVE) { // if slave SS and SCK is input
     DDR_SPI &= ~(1<<SPI_MOSI_PIN); // input
@@ -54,20 +53,17 @@ void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock)
   
 }
 
-void disable_spi()
-{
+void disable_spi() {
   SPCR = 0;
 }
 
-uint8_t send_spi(uint8_t out)
-{
+uint8_t send_spi(uint8_t out) {
   SPDR = out;
   while (!(SPSR & (1<<SPIF)));
   return SPDR;
 }
 
-uint8_t received_from_spi(uint8_t data)
-{
+uint8_t received_from_spi(uint8_t data) {
   SPDR = data;
   return SPDR;
 }
