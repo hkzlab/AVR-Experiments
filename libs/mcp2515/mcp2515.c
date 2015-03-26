@@ -53,6 +53,40 @@ void mcp2515_writeRegister(uint8_t address, uint8_t value) {
 	internal_spiChipSelect(0);
 }
 
+void mcp2515_bitModify(uint8_t address, uint8_t value, uint8_t mask) {
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	// Send BITMOD instruction and register address
+	send_spi(MCP2515_INSTR_BITMOD);
+	send_spi(address); // This is where we want to change bits
+	// Send mask
+	send_spi(mask); // Which bits can be changed
+	// Send data
+	send_spi(value); // What value the bits will be changed to
+
+	// Disable the chip
+	internal_spiChipSelect(0);
+}
+
+uint8_t mcp2515_readStatus(void) {
+	uint8_t ret_buf;
+
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	// Send READSTAT instruction
+	send_spi(MCP2515_INSTR_READSTAT);
+	
+	// Read the result
+	ret_buf = send_spi(0);
+
+	// Disable the chip
+	internal_spiChipSelect(0);
+
+	return ret_buf;
+}
+
 void mcp2515_reset(void) {
 	// Enable the chip
 	internal_spiChipSelect(1);
@@ -61,6 +95,33 @@ void mcp2515_reset(void) {
 
 	// Disable the chip
 	internal_spiChipSelect(0);
+}
+
+void mcp2515_rts(mcp2515_rts_buf buf) {
+	// Enable the chip
+	internal_spiChipSelect(1);
+	
+	send_spi(MCP2515_INSTR_RTS | buf);
+
+	// Disable the chip
+	internal_spiChipSelect(0);	
+}
+
+uint8_t mcp2515_readRX(mcp2515_read_buf buf) {
+	uint8_t ret_buf;
+	
+	// Enable the chip
+	internal_spiChipSelect(1);
+	
+	send_spi(MCP2515_INSTR_READRX | buf);
+	
+	// Read the result
+	ret_buf = send_spi(0);
+
+	// Disable the chip
+	internal_spiChipSelect(0);	
+
+	return ret_buf;
 }
 
 /****/

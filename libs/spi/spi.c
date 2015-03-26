@@ -26,10 +26,6 @@
 extern "C"{
 #endif
 
-#ifdef __ARDUINO__
-#include <wiring.h>
-#endif
-
 void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock)
 {
   // specify pin directions for SPI pins on port B
@@ -43,17 +39,19 @@ void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock)
     DDR_SPI &= ~(1<<SPI_MISO_PIN); // input
     DDR_SPI |= (1<<SPI_SCK_PIN);// output
     DDR_SPI |= (1<<SPI_SS_PIN);// output
-	PORT_SPI |= (1 << SPI_SS_PIN);
+	PORT_SPI |= (1 << SPI_SS_PIN); 
   }
+  
   SPCR = ((interrupt ? 1 : 0)<<SPIE) // interrupt enabled
     | (1<<SPE) // enable SPI
     | (dord<<DORD) // LSB or MSB
     | (((clock != SPI_SLAVE) ? 1 : 0) <<MSTR) // Slave or Master
-    | (((mode & 0x02) == 2) << CPOL) // clock timing mode CPOL
+    | (((mode & 0x02) == 0x02) << CPOL) // clock timing mode CPOL
     | (((mode & 0x01)) << CPHA) // clock timing mode CPHA
-    | (((clock & 0x02) == 2) << SPR1) // cpu clock divisor SPR1
+    | (((clock & 0x02) == 0x02) << SPR1) // cpu clock divisor SPR1
     | ((clock & 0x01) << SPR0); // cpu clock divisor SPR0
-  SPSR = (((clock & 0x04) == 4) << SPI2X); // clock divisor SPI2X
+  SPSR = (((clock & 0x04) == 0x04) << SPI2X); // clock divisor SPI2X
+  
 }
 
 void disable_spi()

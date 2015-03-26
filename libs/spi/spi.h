@@ -29,13 +29,15 @@ extern "C"{
 #endif
 
 // create alias for the different SPI chip pins - code assumes all on port B
+#ifdef __ATMEGA328P_DEVICE__
 #define DDR_SPI DDRB
 #define PORT_SPI PORTB
 
-#define SPI_SS_PIN PORTB4
-#define SPI_SCK_PIN PORTB7
-#define SPI_MOSI_PIN PORTB5
-#define SPI_MISO_PIN PORTB6
+#define SPI_SS_PIN PORTB2
+#define SPI_SCK_PIN PORTB5
+#define SPI_MOSI_PIN PORTB3
+#define SPI_MISO_PIN PORTB4
+#endif /* __ATMEGA328P_DEVICE__ */
 
 // SPI clock modes
 #define SPI_MODE_0 0x00 /* Sample (Rising) Setup (Falling) CPOL=0, CPHA=0 */
