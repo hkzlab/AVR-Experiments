@@ -43,6 +43,7 @@ void setup_spi(uint8_t mode, int dord, int interrupt, uint8_t clock)
     DDR_SPI &= ~(1<<SPI_MISO_PIN); // input
     DDR_SPI |= (1<<SPI_SCK_PIN);// output
     DDR_SPI |= (1<<SPI_SS_PIN);// output
+	PORT_SPI |= (1 << SPI_SS_PIN);
   }
   SPCR = ((interrupt ? 1 : 0)<<SPIE) // interrupt enabled
     | (1<<SPE) // enable SPI
@@ -72,3 +73,8 @@ uint8_t received_from_spi(uint8_t data)
   SPDR = data;
   return SPDR;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+

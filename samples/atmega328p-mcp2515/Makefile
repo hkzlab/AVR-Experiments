@@ -33,7 +33,7 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
-include ../328p-8-common.mk
+include ../328p-common.mk
 
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
