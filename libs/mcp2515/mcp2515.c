@@ -31,6 +31,7 @@ void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback) {
 	mcp2515_writeRegister(MCP2515_REG_CANINTE, 0xA3); // Enable RX0/1, ERRIE and MERRE interrupts
 	mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
 	mcp2515_writeRegister(MCP2515_REG_EFLG, 0x00); // Clear error flags
+	mcp2515_writeRegister(MCP2515_REG_TXRTSCTRL, 0x00); // Clear TXRTSCLR
 
 	mcp2515_setMode(loopback ? mcp_func_loopback : mcp_func_normal); // Put it back in normal/loopback mode
 }
@@ -101,21 +102,30 @@ uint8_t mcp2515_readStatus(void) {
 	return ret_buf;
 }
 
-void mcp2515_setMode(mcp2515_func_mode mode) {
+void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr) {
 	// Enable the chip
 	internal_spiChipSelect(1);
 	
-	mcp2515_bitModify(MCP2515_REG_CANCTRL, mode, 0xE0);
-	while((mcp2515_readRegister(MCP2515_REG_CANSTAT) & 0xE0) != mode);
+	// Send WRITE instruction, register address and values
+	send_spi(MCP2515_INSTR_WRITE);
+	send_spi(MCP2515_REG_TXB0SIDH + txb);
+
+	send_spi(addr[0]); // SIDH
+	send_spi(addr[1]); // SIDL
+	send_spi(addr[2]); // EID8
+	send_spi(addr[3]); // EID0
+	send_spi(((rtr ? 1 : 0) << 6)|(dLen & 0x0F)); // dLen + RTR
 
 	// Disable the chip
-	internal_spiChipSelect(0);	
+	internal_spiChipSelect(0);
+}
+
+void mcp2515_setMode(mcp2515_func_mode mode) {
+	mcp2515_bitModify(MCP2515_REG_CANCTRL, mode, 0xE0);
+	while((mcp2515_readRegister(MCP2515_REG_CANSTAT) & 0xE0) != mode);
 }
 
 uint8_t mcp2515_setBitTiming(uint8_t rCNF1, uint8_t rCNF2, uint8_t rCNF3) {
-	// Enable the chip
-	internal_spiChipSelect(1);
-
 	if ((mcp2515_readRegister(MCP2515_REG_CANSTAT) & 0xE0) == mcp_func_config) {
 		mcp2515_writeRegister(MCP2515_REG_CNF1, rCNF1);
 		mcp2515_writeRegister(MCP2515_REG_CNF2, rCNF2);
@@ -125,9 +135,6 @@ uint8_t mcp2515_setBitTiming(uint8_t rCNF1, uint8_t rCNF2, uint8_t rCNF3) {
 	} else {
 		return 0;
 	}
-
-	// Disable the chip
-	internal_spiChipSelect(0);	
 }
 
 uint8_t mcp2515_setCanSpeed(mcp2515_canspeed speed) {
