@@ -178,7 +178,56 @@ typedef enum {
 	mcp_func_config = 0x80
 } mcp2515_func_mode;
 
+// Assuming Fosc = 20Mhz
+typedef enum {
+	mcp_can_speed_50 = 0x00,
+	mcp_can_speed_125 = 0x01,
+	mcp_can_speed_250 = 0x02,
+	mcp_can_speed_500 = 0x03
+} mcp2515_canspeed;
+
+void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
+uint8_t mcp2515_setCanSpeed(mcp2515_canspeed speed);
 void mcp2515_setMode(mcp2515_func_mode mode);
+
+/* TIMING:
+ * CNF1:
+ *	- bit 7-6 -> SJW: Synchronization Jump Width Length bits <1:0>
+ *		11: Length = 4 * Tq
+ *		10: Length = 3 * Tq
+ *		01: Length = 2 * Tq
+ *		00: Length = 1 * Tq
+ *	- bit 5-0 -> BRP: Baud Rate Prescaler bits <5:0>
+ *		Tq = 2 * (BRP + 1)/Fosc
+ *
+ * CNF2:
+ *	- bit 7 -> BTLMODE: PS2 Bit Time Length
+ *		1: Length of PS2 determined by PHSEG22:PHSEG20 bits of CNF3
+ *		0: Length of PS2 is the greater of PS1 and IPT (2 Tq)
+ *	- bit 6 -> SAM: Sample Point Configuration
+ *		1: Bus line is sampled three times at the sample point
+ *		0: Bus line is sampled once at the sample point
+ *	- bit 5-3 -> PHSEG1: PS1 Length bits <2:0>
+ *		(PHSEG1 + 1) * Tq
+ *	- bit 2-0 -> PRSEG: Propagation Segment LEngth bits <2:0>
+ *		(PRSEG + 1) * Tq
+ *
+ * CNF3:
+ *	- bit 7 -> SOF: Start-of-Frame signal
+ *		If CANCTRL.CLKEN = 1
+ *			1: CLKOUT pin enabled for SOF signal
+ *			0: CLKOUT pin enabled for clockout function
+ *		If CANCTRL.CLKEN = 0, Bit is "don't care"
+ *	- bit 6 -> WAKFIL: Wake-up Filter bit
+ *		1: Wake-up filter enabled
+ *		0: Wake-up filter disabled
+ *	- bit 5-3 -> UNIMPLEMENTED
+ *	- bit 2-0 -> PHSEG2: PS2 Length bits <2:0>
+ *		(PHSEG2 + 1) * Tq 
+ *		NOTE: Minimum valid setting for PS2 is 2 Tq
+ *
+ */
+uint8_t mcp2515_setBitTiming(uint8_t rCNF1, uint8_t rCNF2, uint8_t rCNF3);
 
 uint8_t mcp2515_readRegister(uint8_t address);
 void mcp2515_writeRegister(uint8_t address, uint8_t value);

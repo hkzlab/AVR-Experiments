@@ -30,12 +30,11 @@ int main(void) {
 	// Setup SPI
 	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK4);
 
-	mcp2515_reset();
-	mcp2515_setMode(mcp_func_normal);
+	mcp2515_simpleStartup(mcp_can_speed_50, 0);
 
 	while (1) {
 		_delay_ms(1000);
-		fprintf(stdout, "STAT %.2X\n", mcp2515_readRegister(0x0E));
+		fprintf(stdout, "STAT %.2X - %u\n", mcp2515_readRegister(0x0E), interrupt_received);
 	}
 
     return 0;

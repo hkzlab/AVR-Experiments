@@ -18,9 +18,23 @@ extern "C"{
  * - BIT MODIFY: Change masked bits in selected register
  */
 
+//
+
 static void internal_spiChipSelect(uint8_t state);
 
 /****/
+void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback) {
+	mcp2515_reset(); // Reset the MCP
+	mcp2515_setMode(mcp_func_config); // Make sure it's in config mode
+
+	mcp2515_setCanSpeed(speed); // Set the speed
+	mcp2515_writeRegister(MCP2515_REG_CANINTE, 0xA3); // Enable RX0/1, ERRIE and MERRE interrupts
+	mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
+	mcp2515_writeRegister(MCP2515_REG_EFLG, 0x00); // Clear error flags
+
+	mcp2515_setMode(loopback ? mcp_func_loopback : mcp_func_normal); // Put it back in normal/loopback mode
+}
+
 uint8_t mcp2515_readRegister(uint8_t address) {
 	uint8_t ret_buf;
 
@@ -96,6 +110,56 @@ void mcp2515_setMode(mcp2515_func_mode mode) {
 
 	// Disable the chip
 	internal_spiChipSelect(0);	
+}
+
+uint8_t mcp2515_setBitTiming(uint8_t rCNF1, uint8_t rCNF2, uint8_t rCNF3) {
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	if ((mcp2515_readRegister(MCP2515_REG_CANSTAT) & 0xE0) == mcp_func_config) {
+		mcp2515_writeRegister(MCP2515_REG_CNF1, rCNF1);
+		mcp2515_writeRegister(MCP2515_REG_CNF2, rCNF2);
+		mcp2515_bitModify(MCP2515_REG_CNF3, rCNF3, /*0xC7*/0x07);
+
+		return 1;
+	} else {
+		return 0;
+	}
+
+	// Disable the chip
+	internal_spiChipSelect(0);	
+}
+
+uint8_t mcp2515_setCanSpeed(mcp2515_canspeed speed) {
+	uint8_t rCNF1, rCNF2, rCNF3;
+
+	// Value calculated with microchip bit-timing tool
+	switch (speed) {
+		case mcp_can_speed_500:
+			rCNF1 = 0x00;
+			rCNF2 = 0xBA;
+			rCNF3 = 0x07;
+			break;
+		case mcp_can_speed_250:
+			rCNF1 = 0x01;
+			rCNF2 = 0xBA;
+			rCNF3 = 0x07;
+			break;
+		case mcp_can_speed_125:
+			rCNF1 = 0x03;
+			rCNF2 = 0xBA;
+			rCNF3 = 0x07;
+			break;
+		case mcp_can_speed_50:
+		default:
+			rCNF1 = 0x07;
+			rCNF2 = 0xBF;
+			rCNF3 = 0x07;
+			break;
+
+	}
+
+	return mcp2515_setBitTiming(rCNF1, rCNF2, rCNF3);
 }
 
 void mcp2515_reset(void) {
