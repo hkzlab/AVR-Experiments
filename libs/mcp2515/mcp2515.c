@@ -84,6 +84,13 @@ void mcp2515_bitModify(uint8_t address, uint8_t value, uint8_t mask) {
 	internal_spiChipSelect(0);
 }
 
+mcp2515_canint_stat mcp2515_intStatus(void) {
+	mcp2515_canint_stat cstat;
+	*((uint8_t*)&cstat) = mcp2515_readRegister(MCP2515_REG_CANINTF);
+
+	return cstat;
+}
+
 uint8_t mcp2515_readStatus(void) {
 	uint8_t ret_buf;
 

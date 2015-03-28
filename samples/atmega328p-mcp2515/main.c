@@ -24,7 +24,8 @@ int main(void) {
 	
 	uint8_t address[] = {0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t exdata[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	uint8_t status, psize;
+	uint8_t psize;
+	mcp2515_canint_stat status;
 
 	// Initialize serial port for output
 	uart_init();
@@ -43,15 +44,15 @@ int main(void) {
 	while (1) {
 
 		if(interrupt_received) {
-			status = mcp2515_readRegister(MCP2515_REG_CANINTF);
-			fprintf(stdout, "RECEIVED INTERRUPT! -> %.2X\n", status);
+			status = mcp2515_intStatus();			
+			fprintf(stdout, "RECEIVED INTERRUPT!\n");
 
-			if (status & 0x02) {
+			if (status.rx1if) {
 				psize = mcp2515_readMSG(mcp_rx_rxb1, address, exdata);
 				fprintf(stdout, "\tRXB1 (%u) -> %.2X %.2X %.2X %.2X | %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", psize, address[0], address[1], address[2], address[3], exdata[0], exdata[1], exdata[2], exdata[3], exdata[4], exdata[5], exdata[6], exdata[7]);
 			}
 
-			if (status & 0x01) {
+			if (status.rx0if) {
 				psize = mcp2515_readMSG(mcp_rx_rxb0, address, exdata);
 				fprintf(stdout, "\tRXB0 (%u) -> %.2X %.2X %.2X %.2X | %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", psize, address[0], address[1], address[2], address[3], exdata[0], exdata[1], exdata[2], exdata[3], exdata[4], exdata[5], exdata[6], exdata[7]);
 			}

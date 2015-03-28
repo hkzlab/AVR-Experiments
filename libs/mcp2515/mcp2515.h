@@ -211,7 +211,19 @@ typedef enum {
 	mcp_rx_rxb1 = 0x10
 } mcp2515_rxb;
 
+typedef struct {
+	uint8_t rx0if : 1;
+	uint8_t rx1if : 1;
+	uint8_t tx0if : 1;
+	uint8_t tx1if : 1;
+	uint8_t tx2if : 1;
+	uint8_t errif : 1;
+	uint8_t wakif : 1;
+	uint8_t merif : 1;
+}  __attribute__ ((packed)) mcp2515_canint_stat;
+
 void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
+mcp2515_canint_stat mcp2515_intStatus(void);
 void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask);
 void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr, uint8_t priority);
 uint8_t mcp2515_readMSG(mcp2515_rxb rxb, uint8_t *address, uint8_t *data);
