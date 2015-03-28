@@ -102,7 +102,7 @@ uint8_t mcp2515_readStatus(void) {
 	return ret_buf;
 }
 
-void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr) {
+void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr, uint8_t priority) {
 	// Enable the chip
 	internal_spiChipSelect(1);
 	
@@ -118,6 +118,8 @@ void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t
 
 	// Disable the chip
 	internal_spiChipSelect(0);
+
+	mcp2515_bitModify(MCP2515_REG_TXB0CTRL + txb, priority, 0x03);
 }
 
 void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask) {
@@ -143,6 +145,61 @@ void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask
 	send_spi(mask[1]); // SIDL
 	send_spi(mask[2]); // EID8
 	send_spi(mask[3]); // EID0
+
+	// Disable the chip
+	internal_spiChipSelect(0);
+}
+
+uint8_t mcp2515_readMSG(mcp2515_rxb rxb, uint8_t *address, uint8_t *data) {
+	uint8_t size = 0, idx;
+
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	// Read the address...
+	send_spi(MCP2515_INSTR_READ);
+	send_spi(MCP2515_REG_RXB0SIDH + rxb);
+	address[0] = send_spi(0x00); // SIDH
+	address[1] = send_spi(0x00); // SIDL
+	address[2] = send_spi(0x00); // EID8
+	address[3] = send_spi(0x00); // EID0
+	address[4] = send_spi(0x00); // DLC
+
+	// Get the packet size
+	size = address[4] & 0x0F;
+
+	// And read the packet
+	for (idx = 0; idx < size; idx++)
+		data[idx] = send_spi(0x00);
+
+	// Disable the chip
+	internal_spiChipSelect(0);
+
+	return size;
+}
+
+void mcp2515_loadMSG(mcp2515_txb txb, uint8_t *data, uint8_t len) {
+	uint8_t idx;
+
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	// Send WRITE instruction, register address and values
+	send_spi(MCP2515_INSTR_WRITE);
+	send_spi(MCP2515_REG_TXB0D0 + txb);
+
+	for(idx = 0; idx < len; idx++)
+		send_spi(data[idx]);
+
+	// Disable the chip
+	internal_spiChipSelect(0);
+}
+
+void mcp2515_sendMSG(uint8_t buffers) {
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	send_spi(MCP2515_INSTR_RTS | buffers);
 
 	// Disable the chip
 	internal_spiChipSelect(0);

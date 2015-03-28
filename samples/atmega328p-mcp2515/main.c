@@ -31,6 +31,7 @@ int main(void) {
 	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK4);
 
 	mcp2515_simpleStartup(mcp_can_speed_50, 1);
+	
 
 	while (1) {
 		_delay_ms(1000);

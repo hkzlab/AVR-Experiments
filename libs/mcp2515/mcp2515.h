@@ -164,6 +164,12 @@ extern "C"{
 #define MCP2515_REG_CANSTAT7	0x7E
 #define MCP2515_REG_CANCTRL7	0x7F
 */
+
+#define RTS_TXB0 0x01
+#define RTS_TXB1 0x02
+#define RTS_TXB2 0x04
+#define RTS_TXB_ALL 0x07
+
 /************/
 
 typedef enum {
@@ -207,7 +213,10 @@ typedef enum {
 
 void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
 void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask);
-void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr);
+void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr, uint8_t priority);
+uint8_t mcp2515_readMSG(mcp2515_rxb rxb, uint8_t *address, uint8_t *data);
+void mcp2515_loadMSG(mcp2515_txb txb, uint8_t *data, uint8_t len);
+void mcp2515_sendMSG(uint8_t buffers); // Buffers is RTS_TXB0, RTS_TXB1, RTS_TXB2 ORed together, or RTS_TXB_ALL
 uint8_t mcp2515_setCanSpeed(mcp2515_canspeed speed);
 void mcp2515_setMode(mcp2515_func_mode mode);
 
