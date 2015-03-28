@@ -90,6 +90,7 @@ extern "C"{
 #define MCP2515_REG_CANCTRL3	0x3F
 
 // TXB1
+/*
 #define MCP2515_REG_TXB1CTRL	0x40
 #define MCP2515_REG_TXB1SIDH	0x41
 #define MCP2515_REG_TXB1SIDL	0x42
@@ -124,6 +125,7 @@ extern "C"{
 #define MCP2515_REG_TXB2D7		0x5D
 #define MCP2515_REG_CANSTAT5	0x5E
 #define MCP2515_REG_CANCTRL5	0x5F
+*/
 
 // RXB0
 #define MCP2515_REG_RXB0CTRL	0x60
@@ -144,6 +146,7 @@ extern "C"{
 #define MCP2515_REG_CANCTRL6	0x6F
 
 // RXB1
+/*
 #define MCP2515_REG_RXB1CTRL	0x70
 #define MCP2515_REG_RXB1SIDH	0x71
 #define MCP2515_REG_RXB1SIDL	0x72
@@ -160,7 +163,7 @@ extern "C"{
 #define MCP2515_REG_RXB1D7		0x7D
 #define MCP2515_REG_CANSTAT7	0x7E
 #define MCP2515_REG_CANCTRL7	0x7F
-
+*/
 /************/
 
 typedef enum {
@@ -203,6 +206,7 @@ typedef enum {
 } mcp2515_rxb;
 
 void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
+void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask);
 void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr);
 uint8_t mcp2515_setCanSpeed(mcp2515_canspeed speed);
 void mcp2515_setMode(mcp2515_func_mode mode);

@@ -120,6 +120,34 @@ void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t
 	internal_spiChipSelect(0);
 }
 
+void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask) {
+	// Enable the chip
+	internal_spiChipSelect(1);
+
+	// WRITE the filter
+	send_spi(MCP2515_INSTR_WRITE);
+	send_spi(MCP2515_REG_RXF0SIDH + rxb);
+	send_spi(filter[0]); // SIDH
+	send_spi(filter[1]); // SIDL
+	send_spi(filter[2]); // EID8
+	send_spi(filter[3]); // EID0
+
+	// Disable & Enable the chip
+	internal_spiChipSelect(0);
+	internal_spiChipSelect(1);
+
+	// WRITE the mask
+	send_spi(MCP2515_INSTR_WRITE);
+	send_spi(MCP2515_REG_RXM0SIDH + rxb);
+	send_spi(mask[0]); // SIDH
+	send_spi(mask[1]); // SIDL
+	send_spi(mask[2]); // EID8
+	send_spi(mask[3]); // EID0
+
+	// Disable the chip
+	internal_spiChipSelect(0);
+}
+
 void mcp2515_setMode(mcp2515_func_mode mode) {
 	mcp2515_bitModify(MCP2515_REG_CANCTRL, mode, 0xE0);
 	while((mcp2515_readRegister(MCP2515_REG_CANSTAT) & 0xE0) != mode);
