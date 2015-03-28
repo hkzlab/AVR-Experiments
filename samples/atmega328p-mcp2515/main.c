@@ -38,7 +38,7 @@ int main(void) {
 	// Setup SPI
 	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK4);
 
-	mcp2515_simpleStartup(mcp_can_speed_250, 1);
+	mcp2515_simpleStartup(mcp_can_speed_50, 1);
 	
 
 	while (1) {
@@ -68,7 +68,7 @@ int main(void) {
 		//	while(!(mcp2515_readRegister(MCP2515_REG_CANINTF) & 0x04));
 		}
 
-		_delay_ms(1000);
+		_delay_ms(300);
 	}
 
     return 0;
