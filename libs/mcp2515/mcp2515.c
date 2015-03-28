@@ -164,7 +164,7 @@ uint8_t mcp2515_readMSG(mcp2515_rxb rxb, uint8_t *address, uint8_t *data) {
 	address[2] = send_spi(0x00); // EID8
 	address[3] = send_spi(0x00); // EID0
 	address[4] = send_spi(0x00); // DLC
-
+	
 	// Get the packet size
 	size = address[4] & 0x0F;
 
@@ -187,7 +187,6 @@ void mcp2515_loadMSG(mcp2515_txb txb, uint8_t *data, uint8_t len) {
 	// Send WRITE instruction, register address and values
 	send_spi(MCP2515_INSTR_WRITE);
 	send_spi(MCP2515_REG_TXB0D0 + txb);
-
 	for(idx = 0; idx < len; idx++)
 		send_spi(data[idx]);
 

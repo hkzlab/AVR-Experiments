@@ -207,8 +207,8 @@ typedef enum {
 } mcp2515_txb;
 
 typedef enum {
-	mcp_tx_rxb0 = 0x00,
-	mcp_tx_rxb1 = 0x10
+	mcp_rx_rxb0 = 0x00,
+	mcp_rx_rxb1 = 0x10
 } mcp2515_rxb;
 
 void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
