@@ -194,10 +194,11 @@ typedef enum {
 
 // Assuming Fosc = 20Mhz
 typedef enum {
-	mcp_can_speed_50 = 0x00,
-	mcp_can_speed_125 = 0x01,
-	mcp_can_speed_250 = 0x02,
-	mcp_can_speed_500 = 0x03
+	mcp_can_speed_25 = 0x00,
+	mcp_can_speed_50 = 0x01,
+	mcp_can_speed_125 = 0x02,
+	mcp_can_speed_250 = 0x03,
+	mcp_can_speed_500 = 0x04
 } mcp2515_canspeed;
 
 typedef enum {

@@ -249,12 +249,16 @@ uint8_t mcp2515_setCanSpeed(mcp2515_canspeed speed) {
 			rCNF3 = 0x07;
 			break;
 		case mcp_can_speed_50:
-		default:
 			rCNF1 = 0x07;
 			rCNF2 = 0xBF;
 			rCNF3 = 0x07;
 			break;
-
+		case mcp_can_speed_25:
+		default:
+			rCNF1 = 0x0F;
+			rCNF2 = 0xBF;
+			rCNF3 = 0x07;
+			break;
 	}
 
 	return mcp2515_setBitTiming(rCNF1, rCNF2, rCNF3);
