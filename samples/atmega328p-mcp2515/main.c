@@ -36,13 +36,12 @@ int main(void) {
 	sei(); // Enable interrupts
 	
 	// Setup SPI
-	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK4);
+	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK2);
 
-	mcp2515_simpleStartup(mcp_can_speed_50, 1);
+	mcp2515_simpleStartup(mcp_can_speed_25, 0);
 	
 
 	while (1) {
-
 		if(interrupt_received) {
 			status = mcp2515_intStatus();			
 			fprintf(stdout, "RECEIVED INTERRUPT!\n");
@@ -59,16 +58,17 @@ int main(void) {
 
 			mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
 			interrupt_received = 0;
-		} else {
+		} 
 
-			fprintf(stdout, "SENDING MESSAGE!\n");
-			mcp2515_setupTX(mcp_tx_txb0, raddress, 8, 0, 0);
-			mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
-			mcp2515_sendMSG(RTS_TXB0);
-		//	while(!(mcp2515_readRegister(MCP2515_REG_CANINTF) & 0x04));
-		}
 
-		_delay_ms(300);
+		fprintf(stdout, "SENDING MESSAGE!\n");
+		mcp2515_setupTX(mcp_tx_txb0, raddress, 8, 0, 0);
+		mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
+		mcp2515_sendMSG(RTS_TXB0);
+		
+		while(!(mcp2515_readRegister(MCP2515_REG_CANINTF) & 0x04));
+		
+		_delay_ms(1000);
 	}
 
     return 0;
