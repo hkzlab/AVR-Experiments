@@ -28,7 +28,7 @@ void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback) {
 	mcp2515_setMode(mcp_func_config); // Make sure it's in config mode
 
 	mcp2515_setCanSpeed(speed); // Set the speed
-	mcp2515_writeRegister(MCP2515_REG_CANINTE, 0xA3); // Enable RX0/1, ERRIE and MERRE interrupts
+	mcp2515_writeRegister(MCP2515_REG_CANINTE, 0xA3 | 0x1C); // Enable RX0/1, ERRIE and MERRE interrupts (and all TXnIE)
 	mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
 	mcp2515_writeRegister(MCP2515_REG_EFLG, 0x00); // Clear error flags
 	mcp2515_writeRegister(MCP2515_REG_TXRTSCTRL, 0x00); // Clear TXRTSCLR

@@ -12,7 +12,7 @@
 #include "uart.h"
 #include "main.h"
 
-static volatile uint8_t interrupt_received = 0;
+static volatile uint8_t interrupt_received = 0, first_pkt = 1;
 void (*int_handler)(void); 
 
 static void extInterruptINIT(void (*handler)(void));
@@ -41,6 +41,8 @@ int main(void) {
 	mcp2515_simpleStartup(mcp_can_speed_25, 0);
 	
 
+	interrupt_received = 1;
+
 	while (1) {
 		if(interrupt_received) {
 			status = mcp2515_intStatus();			
@@ -56,17 +58,20 @@ int main(void) {
 				fprintf(stdout, "\tRXB0 (%u) -> %.2X %.2X %.2X %.2X | %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", psize, address[0], address[1], address[2], address[3], exdata[0], exdata[1], exdata[2], exdata[3], exdata[4], exdata[5], exdata[6], exdata[7]);
 			}
 
+			if (status.tx0if || first_pkt) {
+				first_pkt = 0;
+
+				fprintf(stdout, "SENDING MESSAGE!\n");
+				mcp2515_setupTX(mcp_tx_txb0, raddress, 8, 0, 0);
+				mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
+				mcp2515_sendMSG(RTS_TXB0);
+			}
+
 			mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
 			interrupt_received = 0;
 		} 
 
 
-		fprintf(stdout, "SENDING MESSAGE!\n");
-		mcp2515_setupTX(mcp_tx_txb0, raddress, 8, 0, 0);
-		mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
-		mcp2515_sendMSG(RTS_TXB0);
-		
-		while(!(mcp2515_readRegister(MCP2515_REG_CANINTF) & 0x04));
 		
 		_delay_ms(1000);
 	}
