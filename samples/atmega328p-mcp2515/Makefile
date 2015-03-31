@@ -92,7 +92,7 @@ CDEFS = -DF_CPU=$(F_CPU)UL -D__ATMEGA328P_DEVICE__=1
 
 
 # Place -I options here
-CINCS = -I../../libs/ -I../../libs/uart/  -I../../libs/spi/ -I../../libs/mcp2515/
+CINCS = -I../../libs/ -I../../libs/uart/  -I../../libs/spi/ -I../../libs/mcp2515/ -I../../libs/canbus/
 
 
 

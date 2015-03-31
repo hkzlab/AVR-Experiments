@@ -108,6 +108,40 @@ uint8_t mcp2515_readStatus(void) {
 
 	return ret_buf;
 }
+void mcp2515_simpleReadMSG(mcp2515_rxb rxb, can_packet *pkt) {
+	uint8_t address[5];
+
+	pkt->len = mcp2515_readMSG(rxb, address, pkt->data);
+	pkt->rtr = address[4] & 0x40;
+	pkt->ide = address[1] & 0x08;
+	pkt->srr = address[1] & 0x10;
+
+	pkt->address = ((uint32_t)address[0]) << 21;
+	pkt->address |= ((uint32_t)(address[1] & 0xE0)) << 13;
+	if (pkt->ide) {
+		pkt->address |= ((uint32_t)(address[1] & 0x03)) << 16;
+		pkt->address |= ((uint32_t)address[2]) << 8;
+		pkt->address |= ((uint32_t)address[3]) << 0;
+	}
+}
+
+void mcp2515_simpleLoadMSG(mcp2515_txb txb, can_packet *pkt, uint8_t priority) {
+	uint8_t address[4];
+
+	address[0] = pkt->address >> 21;
+	address[1] = (pkt->address & 0x001C0000ul) >> 13;
+	if (pkt->ide) {
+		address[1] |= (pkt->address & 0x00030000) >> 16;
+		address[2] = (pkt->address & 0x0000FF00) >> 8;
+		address[3] = (pkt->address & 0x000000FF) >> 0;
+	}
+
+	address[1] |= pkt->ide ? 0x08 : 0x00;
+	address[1] |= pkt->srr ? 0x10 : 0x00;
+
+	mcp2515_setupTX(txb, address, pkt->len, pkt->rtr, priority);
+	mcp2515_loadMSG(txb, pkt->data, pkt->len);
+}
 
 void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr, uint8_t priority) {
 	// Enable the chip

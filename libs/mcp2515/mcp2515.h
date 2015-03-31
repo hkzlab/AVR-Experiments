@@ -2,10 +2,12 @@
 #define _MCP2515_HEADER_
 
 #include <avr/io.h>
+#include <can_packet.h>
 
 #ifdef __cplusplus
 extern "C"{
 #endif
+
 
 /** COMMAND **/
 #define MCP2515_INSTR_RESET		0xC0
@@ -224,6 +226,9 @@ typedef struct {
 }  __attribute__ ((packed)) mcp2515_canint_stat;
 
 void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
+void mcp2515_simpleReadMSG(mcp2515_rxb rxb, can_packet *pkt);
+void mcp2515_simpleLoadMSG(mcp2515_txb txb, can_packet *pkt, uint8_t priority);
+
 mcp2515_canint_stat mcp2515_intStatus(void);
 void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask);
 void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr, uint8_t priority);
