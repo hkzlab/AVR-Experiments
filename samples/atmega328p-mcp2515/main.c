@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
 
 #include "spi.h"
 #include "mcp2515.h"
@@ -39,10 +40,10 @@ int main(void) {
 	setup_spi(SPI_MODE_0, SPI_MSB, SPI_NO_INTERRUPT, SPI_MSTR_CLK2);
 
 	mcp2515_simpleStartup(mcp_can_speed_25, 0);
-	
+
+	wdt_enable(WDTO_500MS);
 
 	interrupt_received = 1;
-
 	while (1) {
 		if(interrupt_received) {
 			status = mcp2515_intStatus();			
@@ -72,9 +73,12 @@ int main(void) {
 		} 
 
 
+		wdt_reset();
 		
-		_delay_ms(1000);
+		_delay_ms(100);
 	}
+
+	wdt_disable();
 
     return 0;
 }
