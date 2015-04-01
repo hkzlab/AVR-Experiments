@@ -225,11 +225,24 @@ typedef struct {
 	uint8_t merif : 1;
 }  __attribute__ ((packed)) mcp2515_canint_stat;
 
+typedef struct {
+	uint8_t ewarn : 1;
+	uint8_t rxwar : 1;
+	uint8_t txwar : 1;
+	uint8_t rxep : 1;
+	uint8_t txep : 1;
+	uint8_t txbo : 1;
+	uint8_t rx0ovr : 1;
+	uint8_t rx1ovr : 1;
+}  __attribute__ ((packed)) mcp2515_canerr_stat;
+
 void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback);
 void mcp2515_simpleReadMSG(mcp2515_rxb rxb, can_packet *pkt);
 void mcp2515_simpleLoadMSG(mcp2515_txb txb, can_packet *pkt, uint8_t priority);
 
 mcp2515_canint_stat mcp2515_intStatus(void);
+mcp2515_canerr_stat mcp2515_errStatus(void);
+
 void mcp2515_setupRX(mcp2515_rxb rxb, const uint8_t *filter, const uint8_t *mask);
 void mcp2515_setupTX(mcp2515_txb txb, const uint8_t *addr, uint8_t dLen, uint8_t rtr, uint8_t priority);
 uint8_t mcp2515_readMSG(mcp2515_rxb rxb, uint8_t *address, uint8_t *data);

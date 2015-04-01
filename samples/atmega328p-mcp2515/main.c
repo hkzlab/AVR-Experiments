@@ -13,6 +13,9 @@
 #include "uart.h"
 #include "main.h"
 
+static mcp2515_canint_stat status;
+static uint8_t errflag;
+
 static volatile uint8_t interrupt_received = 0, first_pkt = 1;
 void (*int_handler)(void); 
 
@@ -26,7 +29,8 @@ int main(void) {
 	uint8_t address[] = {0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t exdata[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t psize;
-	mcp2515_canint_stat status;
+
+	srand(4);
 
 	// Initialize serial port for output
 	uart_init();
@@ -43,12 +47,15 @@ int main(void) {
 
 	wdt_enable(WDTO_500MS);
 
+	mcp2515_setupTX(mcp_tx_txb0, raddress, 8, 0, 0);
+
 	interrupt_received = 1;
 	while (1) {
-		if(interrupt_received) {
-			status = mcp2515_intStatus();			
-			fprintf(stdout, "RECEIVED INTERRUPT!\n");
+		cli();
 
+		fprintf(stdout, "ERR %.2X\n", errflag);
+
+		if(interrupt_received) {
 			if (status.rx1if) {
 				psize = mcp2515_readMSG(mcp_rx_rxb1, address, exdata);
 				fprintf(stdout, "\tRXB1 (%u) -> %.2X %.2X %.2X %.2X | %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", psize, address[0], address[1], address[2], address[3], exdata[0], exdata[1], exdata[2], exdata[3], exdata[4], exdata[5], exdata[6], exdata[7]);
@@ -59,19 +66,18 @@ int main(void) {
 				fprintf(stdout, "\tRXB0 (%u) -> %.2X %.2X %.2X %.2X | %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X\n", psize, address[0], address[1], address[2], address[3], exdata[0], exdata[1], exdata[2], exdata[3], exdata[4], exdata[5], exdata[6], exdata[7]);
 			}
 
-			if (status.tx0if || first_pkt) {
-				first_pkt = 0;
-
-				fprintf(stdout, "SENDING MESSAGE!\n");
-				mcp2515_setupTX(mcp_tx_txb0, raddress, 8, 0, 0);
-				mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
-				mcp2515_sendMSG(RTS_TXB0);
-			}
-
-			mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
 			interrupt_received = 0;
 		} 
 
+		if(!(rand()%5)) {
+			mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
+			mcp2515_sendMSG(RTS_TXB0);
+			while(!(mcp2515_readRegister(MCP2515_REG_CANINTF) & 0x04));
+		}
+
+		mcp2515_bitModify(MCP2515_REG_EFLG, 0x00, 0xC0); // Clear error flags
+		
+		sei();
 
 		wdt_reset();
 		
@@ -93,6 +99,9 @@ static void extInterruptINIT(void (*handler)(void)) {
 
 static void interrupt_handler(void) {
 	interrupt_received = 1;
+	status = mcp2515_intStatus(); // Read interrupt
+	mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
+	errflag = mcp2515_readRegister(MCP2515_REG_EFLG);
 }
 
 /* System interrupt handler */

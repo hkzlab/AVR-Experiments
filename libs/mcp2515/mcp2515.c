@@ -30,7 +30,7 @@ void mcp2515_simpleStartup(mcp2515_canspeed speed, uint8_t loopback) {
 	mcp2515_setCanSpeed(speed); // Set the speed
 	mcp2515_writeRegister(MCP2515_REG_CANINTE, 0xA3 | 0x1C); // Enable RX0/1, ERRIE and MERRE interrupts (and all TXnIE)
 	mcp2515_writeRegister(MCP2515_REG_CANINTF, 0x00); // Clear interrupt flags
-	mcp2515_writeRegister(MCP2515_REG_EFLG, 0x00); // Clear error flags
+	mcp2515_bitModify(MCP2515_REG_EFLG, 0x00, 0xC0); // Clear error flags
 	mcp2515_writeRegister(MCP2515_REG_TXRTSCTRL, 0x00); // Clear TXRTSCLR
 
 	mcp2515_setMode(loopback ? mcp_func_loopback : mcp_func_normal); // Put it back in normal/loopback mode
@@ -89,6 +89,14 @@ mcp2515_canint_stat mcp2515_intStatus(void) {
 	*((uint8_t*)&cstat) = mcp2515_readRegister(MCP2515_REG_CANINTF);
 
 	return cstat;
+}
+
+mcp2515_canerr_stat mcp2515_errStatus(void) {
+	mcp2515_canerr_stat estat;
+	*((uint8_t*)&estat) = mcp2515_readRegister(MCP2515_REG_EFLG);
+
+	return estat;
+
 }
 
 uint8_t mcp2515_readStatus(void) {
