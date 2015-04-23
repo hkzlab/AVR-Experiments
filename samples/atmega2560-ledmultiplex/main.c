@@ -20,14 +20,14 @@ void (*int_handler)(void);
 // 4 -> C
 // 5 -> G
 // 6 -> B
-static uint8_t segm_mapper[] = {0x00, 0x50, 0x6D, 0x79, 0x72, 0x3B, 0x3F, 0x51, 0x7F, 0x73, 0x77, 0x3E, 0x0F, 0x7C, 0x2F, 0x27};
+static uint8_t segm_mapper[] = {0x5F, 0x50, 0x6D, 0x79, 0x72, 0x3B, 0x3F, 0x51, 0x7F, 0x73, 0x77, 0x3E, 0x0F, 0x7C, 0x2F, 0x27};
 
 static void extInterruptINIT(void (*handler)(void));
 static void interrupt_handler(void);
 
 int main(void) {
 	uint8_t idx, digit_idx;
-	uint16_t cnt = 0;
+	uint32_t cnt = 0;
 	// Initialize serial port for output
 	uart_init();
 	stdout = &uart_output;
@@ -54,13 +54,14 @@ int main(void) {
 		PORTK = ~idx;
 //		_delay_ms(500);
 	}
-/*
+
 		cnt++;
-		if(!(cnt % 50000)) {
+		if(cnt == 0x3FFFF) {
+			cnt = 0;
 			digit_idx = (digit_idx+1)%16;
 			PORTF = segm_mapper[digit_idx];
 		}
-*/
+
 	}
 
     return 0;
