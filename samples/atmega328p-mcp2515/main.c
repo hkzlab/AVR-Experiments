@@ -23,14 +23,14 @@ static void extInterruptINIT(void (*handler)(void));
 static void interrupt_handler(void);
 
 int main(void) {
-	uint8_t raddress[] = {0x55, 0xEB, 0xFA, 0xB1, 0x00};
+	uint8_t raddress[] = {0x54, 0xEB, 0xFA, 0xB1, 0x00};
 	uint8_t rexdata[] = {0xC0, 0xD1, 0x00, 0xC0, 0xD1, 0x00, 0xBE, 0xEF};
 	
 	uint8_t address[] = {0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t exdata[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t psize;
 
-	srand(4);
+	srand(1);
 
 	// Initialize serial port for output
 	uart_init();
@@ -69,7 +69,7 @@ int main(void) {
 			interrupt_received = 0;
 		} 
 
-		if(!(rand()%5)) {
+		if(!(rand()%2)) {
 			mcp2515_loadMSG(mcp_tx_txb0, rexdata, 8);
 			mcp2515_sendMSG(RTS_TXB0);
 			while(!(mcp2515_readRegister(MCP2515_REG_CANINTF) & 0x04));
