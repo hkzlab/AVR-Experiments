@@ -35,6 +35,8 @@
 
 include ../2560-common.mk
 
+AVRDUDE_PORT = /dev/ttyACM0
+
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
