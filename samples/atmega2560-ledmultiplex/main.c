@@ -25,6 +25,9 @@ static uint8_t segm_mapper[] = {0x5F, 0x50, 0x6D, 0x79, 0x72, 0x3B, 0x3F, 0x51, 
 static void extInterruptINIT(void (*handler)(void));
 static void interrupt_handler(void);
 
+static volatile uint8_t cur_display = 0;
+static volatile uint8_t disp_out[3];
+
 int main(void) {
 	uint8_t idx, digit_idx;
 	uint32_t cnt = 0;
@@ -38,30 +41,31 @@ int main(void) {
 	DDRK = 0xFF; // Port K as output
 	PORTK = 0x00; // All pins low on port K
 
+	TIMSK0 |= (1<<TOIE0);                        // Overflow Interrupt enable
+//	TCCR0B |= (1<<CS12)|(1<<CS10);
+	TCCR0B |= (1<<CS12);
+	TCNT0 = 0;
+
 	extInterruptINIT(interrupt_handler);
-//	sei(); // Enable interrupts
-	
-//	wdt_enable(WDTO_500MS);
+
+	disp_out[0] = 0;
+	disp_out[1] = 1;
+	disp_out[2] = 2;
+
+	PORTK = 0x7;
 
 	fprintf(stdout, "RUN\n");
+	
+	sei(); // Enable interrupts
 
-	PORTF = segm_mapper[15];
 
 	cnt = 0; digit_idx = 0;
 	while (1) {
-	//	cli();
-	for(idx = 1; idx < 0x08; idx <<= 1) {
-		PORTK = ~idx;
-//		_delay_ms(500);
-	}
-
-		cnt++;
-		if(cnt == 0x3FFFF) {
-			cnt = 0;
-			digit_idx = (digit_idx+1)%16;
-			PORTF = segm_mapper[digit_idx];
-		}
-
+		disp_out[0] = (disp_out[0] + 1) % 16;
+		disp_out[1] = (disp_out[1] + 1) % 16;
+		disp_out[2] = (disp_out[2] + 1) % 16;
+		
+		_delay_ms(300);
 	}
 
     return 0;
@@ -84,6 +88,16 @@ SIGNAL(INT0_vect) {
 	int_handler();
 } 
 
+
+ISR(TIMER0_OVF_vect) { // multiplex code
+    PORTK = 0x07;
+
+	cur_display = (cur_display + 1) % 3;
+ 	disp_out[cur_display];
+	PORTF = segm_mapper[disp_out[cur_display]];
+
+    PORTK = ~(1 << cur_display);
+}
 
 
 
