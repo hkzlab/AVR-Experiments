@@ -45,7 +45,7 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/spi/spi.c 
+SRC = $(TARGET).c ../../libs/uart/uart.c ../../libs/spi/spi.c ../../libs/rfm12b/rfm12b.c
 
 
 # List Assembler source files here.
@@ -95,7 +95,7 @@ CDEFS = -DF_CPU=$(F_CPU)UL -D__ATMEGA328P_DEVICE__=1
 
 
 # Place -I options here
-CINCS = -I../../libs/ -I../../libs/uart/  -I../../libs/spi/
+CINCS = -I../../libs/ -I../../libs/uart/  -I../../libs/spi/ -I../../libs/rfm12b/
 
 
 
